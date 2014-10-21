@@ -36,13 +36,13 @@ setPayoff(const REAL strike, PrivGlobs& globs)
 }
 
 inline void
-tridag(const vector<REAL>&   a,   // size [n]
-       const vector<REAL>&   b,   // size [n]
-       const vector<REAL>&   c,   // size [n]
-       const vector<REAL>&   r,   // size [n]
+tridag(const REAL *a,   // size [n]
+       const REAL *b,   // size [n]
+       const REAL *c,   // size [n]
+       const REAL *r,   // size [n]
        const int             n,
-       vector<REAL>&         u,   // size [n]
-       vector<REAL>&         uu)  // size [n] temporary
+       REAL *u,   // size [n]
+       REAL *uu)  // size [n] temporary
 {
   int    i, offset;
   REAL   beta;
@@ -71,13 +71,14 @@ tridag(const vector<REAL>&   a,   // size [n]
 #endif
 }
 
+// TODO FIXME: Still need to do flat indexing of vectors that are now flat arrays
 
 void
 rollback(const unsigned g, PrivGlobs& globs)
 {
   unsigned
-    numX = globs.myX.size(),
-    numY = globs.myY.size();
+    numX = globs.numX,
+    numY = globs.numY;
 
   unsigned numZ = max(numX,numY);
 
@@ -162,8 +163,8 @@ value(PrivGlobs  globs,
       const unsigned int numT)
 {
   initGrid(s0, alpha, nu, t, numX, numY, numT, globs);
-  initOperator(globs.myX, globs.myDxx);
-  initOperator(globs.myY, globs.myDyy);
+  initOperator(globs.myX, numX, globs.myDxx);
+  initOperator(globs.myY, numX, globs.myDyy);
 
   setPayoff(strike, globs);
   for(int i = globs.myTimeline.size()-2; i >= 0; i--) {

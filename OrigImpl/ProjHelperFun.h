@@ -1,7 +1,7 @@
 #ifndef PROJ_HELPER_FUNS
 #define PROJ_HELPER_FUNS
 
-#include <vector>
+//#include <vector>
 #include <cmath>
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,22 +13,24 @@ using namespace std;
 struct PrivGlobs {
 
   //  grid
-  vector<REAL>        myX;        // [numX]
-  vector<REAL>        myY;        // [numY]
-  vector<REAL>        myTimeline; // [numT]
-  unsigned            myXindex;
-  unsigned            myYindex;
+  unsigned int numX;
+  unsigned int numY;
+  REAL     *myX;        // [numX]
+  REAL     *myY;        // [numY]
+  REAL     *myTimeline; // [numT]
+  unsigned myXindex;
+  unsigned myYindex;
 
   //  variable
-  vector<vector<REAL> > myResult; // [numX][numY]
+  REAL *myResult; // [numX][numY]
 
   //  coeffs
-  vector<vector<REAL> >   myVarX; // [numX][numY]
-  vector<vector<REAL> >   myVarY; // [numX][numY]
+  REAL *myVarX; // [numX][numY]
+  REAL *myVarY; // [numX][numY]
 
   //  operators
-  vector<vector<REAL> >   myDxx;  // [numX][4]
-  vector<vector<REAL> >   myDyy;  // [numY][4]
+  REAL *myDxx;  // [numX][4]
+  REAL *myDyy;  // [numY][4]
 
   PrivGlobs( ) {
     printf("Invalid Contructor: need to provide the array sizes! EXITING...!\n");
@@ -39,29 +41,19 @@ struct PrivGlobs {
             const unsigned int& numY,
             const unsigned int& numT)
   {
-    this->  myX.resize(numX);
-    this->myDxx.resize(numX);
-    for(int k = 0; k < numX; k++) {
-      this->myDxx[k].resize(4);
-    }
+    this->numX = numX;
+    this->numY = numY;
+    this->myX =   (REAL*)malloc(numX * sizeof(REAL));
+    this->myDxx = (REAL*)malloc(numX * sizeof(REAL) * 4);
 
-    this->  myY.resize(numY);
-    this->myDyy.resize(numY);
-    for(int k = 0; k < numY; k++) {
-      this->myDyy[k].resize(4);
-    }
+    this->myY =   (REAL*)malloc(numY * sizeof(REAL));
+    this->myDyy = (REAL*)malloc(numY * sizeof(REAL) * 4);
 
-    this->myTimeline.resize(numT);
+    this->myTimeline = (REAL*)malloc(numT * sizeof(REAL));
 
-    this->  myVarX.resize(numX);
-    this->  myVarY.resize(numX);
-    this->myResult.resize(numX);
-    for(unsigned i = 0; i < numX; i++) {
-      this->  myVarX[i].resize(numY);
-      this->  myVarY[i].resize(numY);
-      this->myResult[i].resize(numY);
-    }
-
+    this->myVarX   = (REAL*)malloc(numX * numY * sizeof(REAL));
+    this->myVarY   = (REAL*)malloc(numX * numY * sizeof(REAL));
+    this->myResult = (REAL*)malloc(numX * numY * sizeof(REAL));
   }
 } __attribute__ ((aligned (128)));
 
@@ -71,8 +63,7 @@ initGrid(const REAL s0, const REAL alpha, const REAL nu,const REAL t,
          const unsigned numX, const unsigned numY, const unsigned numT, PrivGlobs& globs);
 
 void
-initOperator(const vector<REAL>& x,
-             vector<vector<REAL> >& Dxx);
+initOperator(const REAL *x, const unsigned n, REAL *Dxx);
 
 void
 updateParams(const unsigned g, const REAL alpha, const REAL beta, const REAL nu, PrivGlobs& globs);
@@ -81,13 +72,13 @@ void
 setPayoff(const REAL strike, PrivGlobs& globs);
 
 void
-tridag(const vector<REAL>&   a,   // size [n]
-       const vector<REAL>&   b,   // size [n]
-       const vector<REAL>&   c,   // size [n]
-       const vector<REAL>&   r,   // size [n]
-       const int             n,
-       vector<REAL>&   u,         // size [n]
-       vector<REAL>&   uu);       // size [n] temporary
+tridag(const REAL *a,   // size [n]
+       const REAL *b,   // size [n]
+       const REAL *c,   // size [n]
+       const REAL *r,   // size [n]
+       const int  n,
+       REAL       *u,   // size [n]
+       REAL       *uu); // size [n] temporary
 
 void
 rollback(const unsigned g, PrivGlobs& globs);
