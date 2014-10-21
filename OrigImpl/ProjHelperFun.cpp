@@ -48,9 +48,10 @@ initGrid(const REAL s0,
  * Based on the values of x,
  * Where x's size is n.
  */
-void initOperator(  const vector<REAL>& x,
-                    vector<vector<REAL> >& Dxx
-                    ) {
+void
+initOperator(const vector<REAL>& x,
+             vector<vector<REAL> >& Dxx)
+{
   const unsigned n = x.size();
 
   REAL dxl, dxu;
