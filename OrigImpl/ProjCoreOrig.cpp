@@ -124,6 +124,8 @@ rollback(const unsigned g, PrivGlobs& globs)
     }
 
   //  implicit x
+  //  Vi skriver hver iteration til index i, så derfor skal de privatiseres
+  //  og derefter kan vi unrolle dem så de er flade
   for(j = 0; j < numY; j++) {
     for(i = 0; i < numX; i++) {  // here a, b,c should have size [numX]
       a[i] =       - 0.5*(0.5*globs.myVarX[i][j]*globs.myDxx[i][0]);
@@ -135,6 +137,7 @@ rollback(const unsigned g, PrivGlobs& globs)
   }
 
   //  implicit y
+
   for(i = 0; i < numX; i++) {
     for(j = 0; j < numY; j++) {  // here a, b, c should have size [numY]
       a[j] =       - 0.5*(0.5*globs.myVarY[i][j]*globs.myDyy[j][0]);
