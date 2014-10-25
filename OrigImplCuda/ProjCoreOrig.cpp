@@ -40,37 +40,52 @@ setPayoff(const REAL strike, PrivGlobs& globs)
 
 inline void
 tridag(REAL *a,   // size [n]
-       const REAL *b,   // size [n]
-       REAL *c,   // size [n]
+       REAL *b,   // size [n]
+       const REAL *c,   // size [n]
        const REAL *r,   // size [n]
        const int             n,
        REAL *u,   // size [n]
        REAL *uu)  // size [n] temporary
 {
-  int    i, offset;
-  REAL   beta;
+  int i;
 
-  u[0]  = r[0];
-  uu[0] = b[0];
-
-  // Some kind of scan
+  // Map
   for(i=1; i<n; i++) {
-    beta  = a[i] / uu[i-1];
-    uu[i] = b[i] - beta*c[i-1];
-    u[i]  = r[i] - beta*u[i-1];
+    uu[i] = -a[i] * c[i-1];
+  }
+
+  // CPU-scan
+  uu[0] = 1.0 / b[0];
+  for(i = 1; i < n; i++) {
+    uu[i] = 1.0 / (b[i] + uu[i] * uu[i-1]);
+  }
+
+  // Map
+  for(i = 1; i < n; i++) {
+    a[i] = 1.0 / (c[i-1] * uu[i-1] - b[i] / a[i]);
+  }
+
+  // Map
+  for(i = 0; i < n-1; i++) {
+    b[i] = - c[i] * uu[i];
   }
 
   // Map
   for(i = 0; i < n; i++) {
-    u[i] = u[i] / uu[i];
-    c[i] = c[i] / uu[i];
+    u[i] = r[i] * uu[i];
   }
 
-  // Scan
-  for(i=n-2; i>=0; i--) {
-    u[i] -= c[i]*u[i+1];
+  // CPU-scan
+  for(i=1; i<n; i++) {
+    u[i] += a[i] * u[i-1];
+  }
+
+  // CPU-scan
+  for(i = n-2; i >= 0; i--) {
+    u[i] += b[i] * u[i+1];
   }
 }
+
 
 __global__ void
 rollback_kernel_1(unsigned int numX, unsigned int numY, REAL *d_u, PrivGlobs &globs) {
@@ -281,7 +296,6 @@ run_OrigCPU(const unsigned int&   outer,
             const REAL&           beta,
             REAL*                 res)   // [outer] RESULT
 {
-  printf("%d %d %d\n", numX, numY, numT);
 #pragma omp parallel for
   for(unsigned i = 0; i < outer; i++) {
     res[i] = value(s0,    0.001*i, t,
