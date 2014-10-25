@@ -1,0 +1,324 @@
+#include "ProjHelperFun.h"
+#include "Constants.h"
+
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+#define DIVUP(x, y) (((x) + (y) - 1) / (y))
+
+void
+updateParams(const unsigned g,
+             const REAL alpha,
+             const REAL beta,
+             const REAL nu,
+             PrivGlobs *globs)
+{
+  for(unsigned i = 0; i < globs->numX; i++)
+    for(unsigned j = 0; j < globs->numY; j++) {
+      globs->myVarX[i*globs->numY+j] = exp(2.0*(
+                                                beta*log(globs->myX[i])
+                                                + globs->myY[j]
+                                                - 0.5*nu*nu*globs->myTimeline[g] )
+                                           );
+      globs->myVarY[i*globs->numY+j] = exp(2.0*(
+                                                alpha*log(globs->myX[i])
+                                                + globs->myY[j]
+                                                - 0.5*nu*nu*globs->myTimeline[g]
+                                                )
+                                           ); // nu*nu
+    }
+}
+
+void
+setPayoff(const REAL strike, PrivGlobs *globs)
+{
+  for(unsigned i=0; i < globs->numX; i++)
+    {
+      REAL payoff = MAX(globs->myX[i]-strike, (REAL)0.0);
+      for(unsigned j=0; j<globs->numY; j++)
+        globs->myResult[i*globs->numY+j] = payoff;
+    }
+}
+
+inline void
+tridag(REAL *a,   // size [n]
+       REAL *b,   // size [n]
+       const REAL *c,   // size [n]
+       const REAL *r,   // size [n]
+       const int             n,
+       REAL *u,   // size [n]
+       REAL *uu)  // size [n] temporary
+{
+  int i;
+
+  // Map
+  /* This was originally part of tridag, but was moved outside it */
+  // for(i=1; i<n; i++) {
+  //   uu[i] = -a[i] * c[i-1];
+  // }
+
+  // CPU-scan
+  uu[0] = 1.0 / b[0];
+  for(i = 1; i < n; i++) {
+    uu[i] = 1.0 / (b[i] + uu[i] * uu[i-1]);
+  }
+
+  // Map
+  for(i = 1; i < n; i++) {
+    a[i] = 1.0 / (c[i-1] * uu[i-1] - b[i] / a[i]);
+  }
+
+  // Map
+  for(i = 0; i < n-1; i++) {
+    b[i] = - c[i] * uu[i];
+  }
+
+  // Map
+  for(i = 0; i < n; i++) {
+    u[i] = r[i] * uu[i];
+  }
+
+  // CPU-scan
+  for(i=1; i<n; i++) {
+    u[i] += a[i] * u[i-1];
+  }
+
+  // CPU-scan
+  for(i = n-2; i >= 0; i--) {
+    u[i] += b[i] * u[i+1];
+  }
+}
+
+
+__global__ void
+rollback_kernel_1(PrivGlobs *globs, REAL *v) {
+  const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
+  const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
+  const unsigned int lidJ = threadIdx.y;
+
+  extern __shared__ char sh_mem1[];
+  REAL *sh_mem = (REAL*) sh_mem1;
+
+  if(gidI >= globs->numX || gidJ >= globs->numY)
+    return;
+
+  sh_mem[lidJ + 1] = globs->myResult[gidI * globs->numY + gidJ];
+  if(lidJ == 0) {
+    if (gidJ == 0) {
+      sh_mem[lidJ] = 0;
+    } else {
+      sh_mem[lidJ] = globs->myResult[gidI * globs->numY + gidJ - 1];
+    }
+  }
+
+  if(gidJ == globs->numY-1) {
+    sh_mem[lidJ + 2] = 0;
+  } else if(lidJ == blockDim.y - 1) {
+    sh_mem[lidJ + 2] = globs->myResult[gidI * globs->numY + gidJ + 1];
+  }
+
+  __syncthreads();
+
+  v[gidI*globs->numY + gidJ] = 0.5*globs->myVarY[gidI*globs->numY+gidJ] *
+    (globs->myDyy[4*gidJ+0] * sh_mem[lidJ] +
+     globs->myDyy[4*gidJ+1] * sh_mem[lidJ + 1] +
+     globs->myDyy[4*gidJ+2] * sh_mem[lidJ + 2]);
+}
+
+__global__ void
+rollback_kernel_2(PrivGlobs *globs, REAL *v, REAL *u, REAL dtInv) {
+  const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
+  const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
+  const unsigned int lidI = threadIdx.x;
+
+  extern __shared__ char sh_mem1[];
+  REAL *sh_mem = (REAL*) sh_mem1;
+
+  if(gidI >= globs->numX || gidJ >= globs->numY)
+    return;
+
+  sh_mem[lidI + 1] = globs->myResult[gidI * globs->numY + gidJ];
+  if(lidI == 0) {
+    if (gidI == 0) {
+      sh_mem[lidI] = 0;
+    } else {
+      sh_mem[lidI] = globs->myResult[(gidI - 1) * globs->numY + gidJ];
+    }
+  }
+
+  if(gidI == globs->numX-1) {
+    sh_mem[lidI + 2] = 0;
+  } else if(lidI == blockDim.x - 1) {
+    sh_mem[lidI + 2] = globs->myResult[(gidI + 1) * globs->numY + gidJ];
+  }
+
+  __syncthreads();
+
+  u[gidJ*globs->numX + gidI] = 0.25*globs->myVarX[gidI*globs->numY+gidJ] *
+    (globs->myDxx[4*gidI+0] * sh_mem[lidI] +
+     globs->myDxx[4*gidI+1] * sh_mem[lidI + 1] +
+     globs->myDxx[4*gidI+2] * sh_mem[lidI + 2]) +
+    v[gidI*globs->numY+gidJ] +
+    dtInv * globs->myResult[gidI*globs->numY+gidJ];
+
+
+  // // map
+  // for(j = 0; j < numY; j++) {
+  //   // stencil
+  //   for(i = 0; i < numX; i++) {
+  //     REAL tmp = globs->myDxx[4*i+1] * globs->myResult[    i*globs->numY + j];
+
+  //     if(i > 0) {
+  //       tmp += globs->myDxx[4*i+0] * globs->myResult[(i-1)*globs->numY + j];
+  //     }
+
+  //     if(i < numX-1) {
+  //       tmp += globs->myDxx[4*i+2] * globs->myResult[(i+1)*globs->numY + j];
+  //     }
+
+  //     u[j*numX + i] = dtInv*globs->myResult[i*globs->numY+j] + 0.25*globs->myVarX[i*globs->numY+j]*tmp + v[i*numY+j];
+  //   }
+  // }
+}
+
+
+void
+rollback(const unsigned g, PrivGlobs *globs)
+{
+  unsigned
+    numX = globs->numX,
+    numY = globs->numY;
+
+  unsigned i, j;
+
+  REAL dtInv = 1.0/(globs->myTimeline[g+1]-globs->myTimeline[g]);
+
+  REAL *u;
+  REAL *v;
+  REAL *a;
+  REAL *b;
+  REAL *c;
+  REAL *y;
+  REAL *yy;
+
+  checkCudaError(cudaMallocHost(&u,  numY*numX*sizeof(REAL)));
+  checkCudaError(cudaMallocHost(&v,  numY*numX*sizeof(REAL)));
+  checkCudaError(cudaMallocHost(&a,  numY*numX*sizeof(REAL)));
+  checkCudaError(cudaMallocHost(&b,  numY*numX*sizeof(REAL)));
+  checkCudaError(cudaMallocHost(&c,  numY*numX*sizeof(REAL)));
+  checkCudaError(cudaMallocHost(&y,  numY*numX*sizeof(REAL)));
+  checkCudaError(cudaMallocHost(&yy, numY*numX*sizeof(REAL)));
+
+  rollback_kernel_1
+    <<<
+    dim3(globs->numX, DIVUP(globs->numY, 64), 1),
+    dim3(1, 64, 1),
+    sizeof(REAL) * (64 + 2)
+    >>>
+    (globs, v);
+  checkCudaError(cudaGetLastError());
+  checkCudaError(cudaThreadSynchronize());
+
+  rollback_kernel_2
+    <<<
+    dim3(DIVUP(globs->numX, 64), globs->numY, 1),
+    dim3(64, 1, 1),
+    sizeof(REAL) * (64 + 2)
+    >>>
+    (globs, v, u, dtInv);
+  checkCudaError(cudaGetLastError());
+  checkCudaError(cudaThreadSynchronize());
+
+  for(j = 0; j < numY; j++) {
+    for(i = 0; i < numX; i++) {
+      a[j*numX + i]  =       - 0.5*0.5*globs->myVarX[i*globs->numY+j]*globs->myDxx[4*i + 0];
+      b[j*numX + i]  = dtInv - 0.5*0.5*globs->myVarX[i*globs->numY+j]*globs->myDxx[4*i + 1];
+      c[j*numX + i]  =       - 0.5*0.5*globs->myVarX[i*globs->numY+j]*globs->myDxx[4*i + 2];
+      if(i > 0) {
+        yy[j*numX + i] = -a[j*numX + i] * c[j*numX + i-1];
+      }
+    }
+  }
+
+  for(j = 0; j < numY; j++) {
+    tridag(&a[j*numX], &b[j*numX], &c[j*numX],
+           &u[j*numX], numX,       &u[j*numX],
+           &yy[j*numX]);
+  }
+
+  for(i = 0; i < numX; i++) {
+    for(j = 0; j < numY; j++) {
+      a[i*numY + j] =       - 0.5*0.5*globs->myVarY[i*globs->numY+j]*globs->myDyy[4*j + 0];
+      b[i*numY + j] = dtInv - 0.5*0.5*globs->myVarY[i*globs->numY+j]*globs->myDyy[4*j + 1];
+      c[i*numY + j] =       - 0.5*0.5*globs->myVarY[i*globs->numY+j]*globs->myDyy[4*j + 2];
+      y[i*numY + j] = dtInv * u[j*numX+i] - 0.5*v[i*numY+j];
+      if(j > 0) {
+        yy[i*numY + j] = -a[i*numY + j] * c[i*numY + j-1];
+      }
+    }
+  }
+
+  for(i = 0; i < numX; i++) {
+    tridag(&a[i*numY], &b[i*numY], &c[i*numY],
+           &y[i*numY], numY,       &globs->myResult[i*numY],
+           &yy[i*numY]);
+  }
+  checkCudaError(cudaFreeHost(u));
+  checkCudaError(cudaFreeHost(v));
+  checkCudaError(cudaFreeHost(a));
+  checkCudaError(cudaFreeHost(b));
+  checkCudaError(cudaFreeHost(c));
+  checkCudaError(cudaFreeHost(y));
+  checkCudaError(cudaFreeHost(yy));
+}
+
+REAL
+value(PrivGlobs *globs,
+      const REAL s0,
+      const REAL strike,
+      const REAL t,
+      const REAL alpha,
+      const REAL nu,
+      const REAL beta,
+      const unsigned int numX,
+      const unsigned int numY,
+      const unsigned int numT)
+{
+  setPayoff(strike, globs);
+
+  for(int i = numT-2; i >= 0; i--) {
+    updateParams(i, alpha, beta, nu, globs);
+    rollback(i, globs);
+  }
+
+  return globs->myResult[globs->myXindex*globs->numY+globs->myYindex];
+}
+
+void
+run_OrigCPU(const unsigned int&   outer,
+            const unsigned int&   numX,
+            const unsigned int&   numY,
+            const unsigned int&   numT,
+            const REAL&           s0,
+            const REAL&           t,
+            const REAL&           alpha,
+            const REAL&           nu,
+            const REAL&           beta,
+            REAL*                 res)   // [outer] RESULT
+{
+
+  for(unsigned i = 0; i < outer; i++) {
+    PrivGlobs globs(numX, numY, numT);
+    initGrid(s0, alpha, nu, t, numX, numY, numT, &globs);
+    initOperator(globs.myX, numX, globs.myDxx);
+    initOperator(globs.myY, numY, globs.myDyy);
+
+    PrivGlobs *clone = globs.clone();
+    res[i] = value(clone,
+                   s0,    0.001*i, t,
+                   alpha, nu,      beta,
+                   numX,  numY,    numT);
+    clone->~PrivGlobs();
+    checkCudaError(cudaFreeHost(clone));
+  }
+}
+
+//#endif // PROJ_CORE_ORIG

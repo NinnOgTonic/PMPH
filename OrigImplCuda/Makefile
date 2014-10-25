@@ -1,12 +1,7 @@
-CXX        = g++
+CXX        = nvcc
 LIB        = -L$(OPENCL_LIBDIR) -lOpenCL
-CXXFLAGS   = -fopenmp -O3 -DWITH_FLOATS=0
-#CXXFLAGS   = -fopenmp -O0 -ggdb -DWITH_FLOATS=0
 
-INCLUDES    += -I ../include
-GPU_OPTS   = -D lgWARP=5
-
-SOURCES_CPP =ProjectMain.cpp ProjHelperFun.cpp ProjCoreOrig.cpp 
+SOURCES_CPP =ProjectMain.cpp ProjHelperFun.cpp ProjCoreOrig.cu
 HELPERS     =ProhHelperFun.h ../include/Constants.h ../include/ParseInput.h ../include/ParserC.h ../include/OpenmpUtil.h
 OBJECTS     =ProjectMain.o ProjHelperFun.o  ProjCoreOrig.o
 EXECUTABLE  =runproject
@@ -14,24 +9,24 @@ EXECUTABLE  =runproject
 
 default: cpu
 
-.cpp.o: $(SOURCES_CPP) $(HELPERS)
-	$(CXX) $(CXXFLAGS) $(GPU_OPTS) $(INCLUDES) -c -o $@ $<
+%.o: %.cu
+	nvcc -g -I ../include -c --compiler-options -Wall -O3 -arch=sm_35 -o $@ $<
 
+%.o: %.cpp
+	nvcc -g -I ../include -c --compiler-options -Wall -O3 -arch=sm_35 -o $@ $<
 
 cpu: $(EXECUTABLE)
 $(EXECUTABLE): $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(EXECUTABLE) $(OBJECTS)
-
+	nvcc -g -I ../include --compiler-options -Wall -O3 -arch=sm_35 -o $@ $^
 
 run_small: $(EXECUTABLE)
-	cat ../Data/Small/input.data ../Data/Small/output.data | ./$(EXECUTABLE) 2> Debug.txt
+	cat ../Data/Small/input.data ../Data/Small/output.data | ./$(EXECUTABLE)
 
 run_medium: $(EXECUTABLE)
-	cat ../Data/Medium/input.data ../Data/Medium/output.data | ./$(EXECUTABLE) 2> Debug.txt
+	cat ../Data/Medium/input.data ../Data/Medium/output.data | ./$(EXECUTABLE)
 
 run_large: $(EXECUTABLE)
-	cat ../Data/Large/input.data ../Data/Large/output.data | ./$(EXECUTABLE) 2> Debug.txt
+	cat ../Data/Large/input.data ../Data/Large/output.data | ./$(EXECUTABLE)
 
 clean:
 	rm -f Debug.txt $(EXECUTABLE) $(OBJECTS)
-

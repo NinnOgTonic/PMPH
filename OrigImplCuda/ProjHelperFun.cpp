@@ -20,25 +20,25 @@ initGrid(const REAL s0,
          const unsigned numX,
          const unsigned numY,
          const unsigned numT,
-         PrivGlobs& globs)
+         PrivGlobs *globs)
 {
   for(unsigned i=0;i<numT;++i)
-    globs.myTimeline[i] = t*i/(numT-1);
+    globs->myTimeline[i] = t*i/(numT-1);
 
   const REAL stdX = 20.0*alpha*s0*sqrt(t);
   const REAL dx = stdX/numX;
-  globs.myXindex = static_cast<unsigned>(s0/dx) % numX;
+  globs->myXindex = static_cast<unsigned>(s0/dx) % numX;
 
   for(unsigned i=0;i<numX;++i)
-    globs.myX[i] = i*dx - globs.myXindex*dx + s0;
+    globs->myX[i] = i*dx - globs->myXindex*dx + s0;
 
   const REAL stdY = 10.0*nu*sqrt(t);
   const REAL dy = stdY/numY;
   const REAL logAlpha = log(alpha);
-  globs.myYindex = static_cast<unsigned>(numY/2.0);
+  globs->myYindex = static_cast<unsigned>(numY/2.0);
 
   for(unsigned i=0;i<numY;++i)
-    globs.myY[i] = i*dy - globs.myYindex*dy + logAlpha;
+    globs->myY[i] = i*dy - globs->myYindex*dy + logAlpha;
 }
 
 /**

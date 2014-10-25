@@ -1,7 +1,8 @@
 #ifndef PROJ_HELPER_FUNS
 #define PROJ_HELPER_FUNS
 
-/* #include <vector> */
+#include <new>
+#include <cuda_runtime.h>
 #include <cmath>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,6 +10,15 @@
 #include "Constants.h"
 
 using namespace std;
+
+static inline void
+checkCudaError(cudaError err) {
+  if (err != cudaSuccess) {
+    fprintf(stderr, "Error: %s\n", cudaGetErrorString(err));
+    fflush(stderr);
+    exit(1);
+  }
+}
 
 
 struct PrivGlobs {
@@ -46,57 +56,61 @@ struct PrivGlobs {
     this->numX = numX;
     this->numY = numY;
     this->numT = numT;
-    this->myX =   (REAL*)malloc(numX * sizeof(REAL));
-    this->myDxx = (REAL*)malloc(numX * sizeof(REAL) * 4);
-
-    this->myY =   (REAL*)malloc(numY * sizeof(REAL));
-    this->myDyy = (REAL*)malloc(numY * sizeof(REAL) * 4);
-
-    this->myTimeline = (REAL*)malloc(numT * sizeof(REAL));
-
-    this->myVarX   = (REAL*)malloc(numX * numY * sizeof(REAL));
-    this->myVarY   = (REAL*)malloc(numX * numY * sizeof(REAL));
-    this->myResult = (REAL*)malloc(numX * numY * sizeof(REAL));
+    checkCudaError(cudaMallocHost(&this->myX,        numX * sizeof(REAL)));
+    checkCudaError(cudaMallocHost(&this->myDxx,      numX * sizeof(REAL) * 4));
+    checkCudaError(cudaMallocHost(&this->myY,        numY * sizeof(REAL)));
+    checkCudaError(cudaMallocHost(&this->myDyy,      numY * sizeof(REAL) * 4));
+    checkCudaError(cudaMallocHost(&this->myTimeline, numT * sizeof(REAL)));
+    checkCudaError(cudaMallocHost(&this->myVarX,     numX * numY * sizeof(REAL)));
+    checkCudaError(cudaMallocHost(&this->myVarY,     numX * numY * sizeof(REAL)));
+    checkCudaError(cudaMallocHost(&this->myResult,   numX * numY * sizeof(REAL)));
   }
 
-  PrivGlobs clone() {
-    PrivGlobs clone = PrivGlobs(this->numX, this->numY, this->numT);
-    /* memcpy(clone.myX,        this->myX,        sizeof(REAL) * numX); */
-    /* memcpy(clone.myDxx,      this->myDxx,      sizeof(REAL) * numX * 4); */
-    /* memcpy(clone.myY,        this->myY,        sizeof(REAL) * numY); */
-    /* memcpy(clone.myDyy,      this->myDyy,      sizeof(REAL) * numY * 4); */
-    /* memcpy(clone.myTimeline, this->myTimeline, sizeof(REAL) * numT); */
-    /* memcpy(clone.myVarX,     this->myVarX,     sizeof(REAL) * numX * numY); */
-    /* memcpy(clone.myVarY,     this->myVarY,     sizeof(REAL) * numX * numY); */
-    /* memcpy(clone.myResult,   this->myResult,   sizeof(REAL) * numX * numY); */
-    return clone;
+  PrivGlobs *clone() {
+    void *placement;
+    cudaMallocHost(&placement, sizeof(PrivGlobs));
+    PrivGlobs *other = new (placement) PrivGlobs(this->numX, this->numY, this->numT);
+
+    memcpy(other->myX,         this->myX,        numX * sizeof(REAL));
+    memcpy(other->myDxx,       this->myDxx,      numX * sizeof(REAL) * 4);
+    memcpy(other->myY,         this->myY,        numY * sizeof(REAL));
+    memcpy(other->myDyy,       this->myDyy,      numY * sizeof(REAL) * 4);
+    memcpy(other->myTimeline,  this->myTimeline, numT * sizeof(REAL));
+    memcpy(other->myVarX,      this->myVarX,     numX * numY * sizeof(REAL));
+    memcpy(other->myVarY,      this->myVarY,     numX * numY * sizeof(REAL));
+    memcpy(other->myResult,    this->myResult,   numX * numY * sizeof(REAL));
+
+    other->myXindex = this->myXindex;
+    other->myYindex = this->myYindex;
+
+    return other;
   }
 
   ~PrivGlobs() {
-    free(this->myX);
-    free(this->myDxx);
-    free(this->myY);
-    free(this->myDyy);
-    free(this->myTimeline);
-    free(this->myVarX);
-    free(this->myVarY);
-    free(this->myResult);
+    checkCudaError(cudaFreeHost(this->myX));
+    checkCudaError(cudaFreeHost(this->myDxx));
+    checkCudaError(cudaFreeHost(this->myY));
+    checkCudaError(cudaFreeHost(this->myDyy));
+    checkCudaError(cudaFreeHost(this->myTimeline));
+    checkCudaError(cudaFreeHost(this->myVarX));
+    checkCudaError(cudaFreeHost(this->myVarY));
+    checkCudaError(cudaFreeHost(this->myResult));
   }
 };
 
 
 void
 initGrid(const REAL s0, const REAL alpha, const REAL nu,const REAL t,
-         const unsigned numX, const unsigned numY, const unsigned numT, PrivGlobs& globs);
+         const unsigned numX, const unsigned numY, const unsigned numT, PrivGlobs *globs);
 
 void
 initOperator(const REAL *x, const unsigned n, REAL *Dxx);
 
 void
-updateParams(const unsigned g, const REAL alpha, const REAL beta, const REAL nu, PrivGlobs& globs);
+updateParams(const unsigned g, const REAL alpha, const REAL beta, const REAL nu, PrivGlobs *globs);
 
 void
-setPayoff(const REAL strike, PrivGlobs& globs);
+setPayoff(const REAL strike, PrivGlobs *globs);
 
 void
 tridag(const REAL *a,   // size [n]

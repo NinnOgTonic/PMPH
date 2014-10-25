@@ -40,8 +40,8 @@ setPayoff(const REAL strike, PrivGlobs& globs)
 inline void
 tridag(REAL *a,   // size [n]
        REAL *b,   // size [n]
-       REAL *c,   // size [n]
-       REAL *r,   // size [n]
+       const REAL *c,   // size [n]
+       const REAL *r,   // size [n]
        const int             n,
        REAL *u,   // size [n]
        REAL *uu)  // size [n] temporary

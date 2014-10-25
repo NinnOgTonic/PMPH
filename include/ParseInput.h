@@ -60,7 +60,7 @@ bool is_pow2(int atr_val) {
 /********** READ DATA SET **********/
 /***********************************/
 
-void readDataSet(   unsigned int& outer, 
+void readDataSet(   unsigned int& outer,
                     unsigned int& num_X,
                     unsigned int& num_Y,
                     unsigned int& num_T
@@ -69,7 +69,7 @@ void readDataSet(   unsigned int& outer,
             read_int( static_cast<unsigned int*>( &num_X ) ) ||
             read_int( static_cast<unsigned int*>( &num_Y ) ) ||
             read_int( static_cast<unsigned int*>( &num_T ) )  ) {
-        
+
         fprintf(stderr, "Syntax error when reading the dataset, i.e., four ints.\n");
         exit(1);
     }
@@ -80,10 +80,10 @@ void readDataSet(   unsigned int& outer,
         atr_ok  = outer > 0;
         assert(atr_ok && "Outer loop count less than 0!");
 
-        atr_ok  = (num_X > 0) && (num_X <= MAX_VAL); 
+        atr_ok  = (num_X > 0) && (num_X <= MAX_VAL);
         assert(atr_ok && "Illegal NUM_X value!");
 
-        atr_ok  = (num_Y > 0) && (num_Y <= MAX_VAL); 
+        atr_ok  = (num_Y > 0) && (num_Y <= MAX_VAL);
         assert(atr_ok && "Illegal NUM_X value!");
 
         atr_ok  = num_T > 0;
@@ -109,7 +109,7 @@ REAL* readOutput( const int& N ) {
 
 bool validate( const REAL* res, const int& N ) {
     bool  is_valid = true;
-    
+
     REAL* std_res = readOutput( N );
 
     for ( int i = 0; i < N; i ++ ) {
@@ -124,17 +124,17 @@ bool validate( const REAL* res, const int& N ) {
     return is_valid;
 }
 
-void writeStatsAndResult(   const bool& valid, const REAL* data,  
+void writeStatsAndResult(   const bool& valid, const REAL* data,
                             const int & outer, const int & num_X,
                             const int & num_Y, const int & num_T,
-                            const bool& is_gpu,const int & P,     
-                            const unsigned long int& elapsed  
+                            const bool& is_gpu,const int & P,
+                            const unsigned long int& elapsed
 ) {
     // print stats to stdout
-    fprintf(stdout, "// OUTER=%d, NUM_X=%d, NUM_Y=%d, NUM_T=%d.\n", 
+    fprintf(stdout, "// OUTER=%d, NUM_X=%d, NUM_Y=%d, NUM_T=%d.\n",
                     outer, num_X, num_Y, num_T     );
 
-    if(valid) { fprintf(stdout, "1\t\t// VALID   Result,\n"); } 
+    if(valid) { fprintf(stdout, "1\t\t// VALID   Result,\n"); }
     else      { fprintf(stdout, "0\t\t// INVALID Result,\n"); }
 
     fprintf(stdout, "%ld\t\t// Runtime in microseconds,\n", elapsed);
@@ -142,7 +142,7 @@ void writeStatsAndResult(   const bool& valid, const REAL* data,
     else       fprintf(stdout, "%d\t\t// CPU Threads,\n\n", P);
 
     // write the result
-    write_1Darr( data, static_cast<int>(outer), 
+    write_1Darr( data, static_cast<int>(outer),
                        "PMPH Project Result"  );
 }
 
@@ -160,4 +160,3 @@ void writeResult( const REAL* res, const unsigned int N, const char* msg ) {
 }
 #endif
 #endif // PARSE_INPUT
-
