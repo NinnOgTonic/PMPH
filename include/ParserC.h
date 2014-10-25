@@ -30,7 +30,7 @@ void skipspaces() {
     } else if (c == '/') {
         // Skip to end of line.
         for (; c != '\n' && c != EOF; c = getchar())
-           ;        
+           ;
         skipspaces();  // Next line may have more spaces.
     } else if (c != EOF) {
         ungetc(c, stdin);
@@ -221,7 +221,7 @@ void write_scal( const int   * i, const char* msg ) {
     if( msg ) fprintf(stdout, "\t// %s\n", msg);
 }
 void write_scal( const double* r, const char* msg ) {
-    fprintf(stdout, "%lf ", *r);
+    fprintf(stdout, "%f ", *r);
     if( msg ) fprintf(stdout, "\t// %s\n", msg);
 }
 void write_scal( const float * r, const char* msg ) {

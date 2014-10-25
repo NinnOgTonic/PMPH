@@ -6,11 +6,11 @@
 int main()
 {
   unsigned int OUTER_LOOP_COUNT, NUM_X, NUM_Y, NUM_T;
-  const REAL s0 = 0.03, strike = 0.03, t = 5.0, alpha = 0.2, nu = 0.6, beta = 0.5;
+  const REAL s0 = 0.03, t = 5.0, alpha = 0.2, nu = 0.6, beta = 0.5;
 
   readDataSet( OUTER_LOOP_COUNT, NUM_X, NUM_Y, NUM_T );
 
-  const int Ps = get_CPU_num_threads();
+  // const int Ps = get_CPU_num_threads();
   REAL* res = (REAL*)malloc(OUTER_LOOP_COUNT*sizeof(REAL));
 
   {   // Original Program (Sequential CPU Execution)
