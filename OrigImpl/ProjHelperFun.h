@@ -1,10 +1,11 @@
 #ifndef PROJ_HELPER_FUNS
 #define PROJ_HELPER_FUNS
 
-#include <vector>
+/* #include <vector> */
 #include <cmath>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "Constants.h"
 
 using namespace std;
@@ -57,7 +58,31 @@ struct PrivGlobs {
     this->myVarY   = (REAL*)malloc(numX * numY * sizeof(REAL));
     this->myResult = (REAL*)malloc(numX * numY * sizeof(REAL));
   }
-} __attribute__ ((aligned (128)));
+
+  PrivGlobs clone() {
+    PrivGlobs clone = PrivGlobs(this->numX, this->numY, this->numT);
+    /* memcpy(clone.myX,        this->myX,        sizeof(REAL) * numX); */
+    /* memcpy(clone.myDxx,      this->myDxx,      sizeof(REAL) * numX * 4); */
+    /* memcpy(clone.myY,        this->myY,        sizeof(REAL) * numY); */
+    /* memcpy(clone.myDyy,      this->myDyy,      sizeof(REAL) * numY * 4); */
+    /* memcpy(clone.myTimeline, this->myTimeline, sizeof(REAL) * numT); */
+    /* memcpy(clone.myVarX,     this->myVarX,     sizeof(REAL) * numX * numY); */
+    /* memcpy(clone.myVarY,     this->myVarY,     sizeof(REAL) * numX * numY); */
+    /* memcpy(clone.myResult,   this->myResult,   sizeof(REAL) * numX * numY); */
+    return clone;
+  }
+
+  ~PrivGlobs() {
+    free(this->myX);
+    free(this->myDxx);
+    free(this->myY);
+    free(this->myDyy);
+    free(this->myTimeline);
+    free(this->myVarX);
+    free(this->myVarY);
+    free(this->myResult);
+  }
+};
 
 
 void
