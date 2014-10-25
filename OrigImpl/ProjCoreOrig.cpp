@@ -97,11 +97,11 @@ rollback(const unsigned g, PrivGlobs& globs)
       u[j][i] = dtInv*globs.myResult[i][j];
 
       if(i > 0) {
-        u[j][i] += 0.5*(0.5*globs.myVarX[i][j]*globs.myDxx[i][0]) * globs.myResult[i-1][j];
+        u[j][i] += 0.5*0.5*globs.myVarX[i][j]*globs.myDxx[i][0] * globs.myResult[i-1][j];
       }
-      u[j][i]   += 0.5*(0.5*globs.myVarX[i][j]*globs.myDxx[i][1]) * globs.myResult[i][j];
+      u[j][i]   += 0.5*0.5*globs.myVarX[i][j]*globs.myDxx[i][1] * globs.myResult[i][j];
       if(i < numX-1) {
-        u[j][i] += 0.5*(0.5*globs.myVarX[i][j]*globs.myDxx[i][2]) * globs.myResult[i+1][j];
+        u[j][i] += 0.5*0.5*globs.myVarX[i][j]*globs.myDxx[i][2] * globs.myResult[i+1][j];
       }
     }
   }
@@ -113,11 +113,11 @@ rollback(const unsigned g, PrivGlobs& globs)
         v[i][j] = 0.0;
 
         if(j > 0) {
-          v[i][j] += (0.5*globs.myVarY[i][j]*globs.myDyy[j][0]) * globs.myResult[i][j-1];
+          v[i][j] += 0.5*globs.myVarY[i][j]*globs.myDyy[j][0]*globs.myResult[i][j-1];
         }
-        v[i][j]   += (0.5*globs.myVarY[i][j]*globs.myDyy[j][1]) * globs.myResult[i][j];
+        v[i][j]   += 0.5*globs.myVarY[i][j]*globs.myDyy[j][1]*globs.myResult[i][j];
         if(j < numY-1) {
-          v[i][j] += (0.5*globs.myVarY[i][j]*globs.myDyy[j][2]) * globs.myResult[i][j+1];
+          v[i][j] += 0.5*globs.myVarY[i][j]*globs.myDyy[j][2]*globs.myResult[i][j+1];
         }
         u[j][i] += v[i][j];
       }
@@ -128,9 +128,9 @@ rollback(const unsigned g, PrivGlobs& globs)
   //  og derefter kan vi unrolle dem så de er flade
   for(j = 0; j < numY; j++) {
     for(i = 0; i < numX; i++) {  // here a, b,c should have size [numX]
-      a[i] =       - 0.5*(0.5*globs.myVarX[i][j]*globs.myDxx[i][0]);
-      b[i] = dtInv - 0.5*(0.5*globs.myVarX[i][j]*globs.myDxx[i][1]);
-      c[i] =       - 0.5*(0.5*globs.myVarX[i][j]*globs.myDxx[i][2]);
+      a[i] =       - 0.5*0.5*globs.myVarX[i][j]*globs.myDxx[i][0];
+      b[i] = dtInv - 0.5*0.5*globs.myVarX[i][j]*globs.myDxx[i][1];
+      c[i] =       - 0.5*0.5*globs.myVarX[i][j]*globs.myDxx[i][2];
     }
     // here yy should have size [numX]
     tridag(a,b,c,u[j],numX,u[j],yy);
@@ -140,9 +140,9 @@ rollback(const unsigned g, PrivGlobs& globs)
 
   for(i = 0; i < numX; i++) {
     for(j = 0; j < numY; j++) {  // here a, b, c should have size [numY]
-      a[j] =       - 0.5*(0.5*globs.myVarY[i][j]*globs.myDyy[j][0]);
-      b[j] = dtInv - 0.5*(0.5*globs.myVarY[i][j]*globs.myDyy[j][1]);
-      c[j] =       - 0.5*(0.5*globs.myVarY[i][j]*globs.myDyy[j][2]);
+      a[j] =       - 0.5*0.5*globs.myVarY[i][j]*globs.myDyy[j][0];
+      b[j] = dtInv - 0.5*0.5*globs.myVarY[i][j]*globs.myDyy[j][1];
+      c[j] =       - 0.5*0.5*globs.myVarY[i][j]*globs.myDyy[j][2];
     }
 
     for(j = 0; j < numY; j++)
