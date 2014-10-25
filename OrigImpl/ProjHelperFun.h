@@ -1,7 +1,7 @@
 #ifndef PROJ_HELPER_FUNS
 #define PROJ_HELPER_FUNS
 
-//#include <vector>
+#include <vector>
 #include <cmath>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,6 +15,7 @@ struct PrivGlobs {
   //  grid
   unsigned int numX;
   unsigned int numY;
+  unsigned int numT;
   REAL     *myX;        // [numX]
   REAL     *myY;        // [numY]
   REAL     *myTimeline; // [numT]
@@ -43,6 +44,7 @@ struct PrivGlobs {
   {
     this->numX = numX;
     this->numY = numY;
+    this->numT = numT;
     this->myX =   (REAL*)malloc(numX * sizeof(REAL));
     this->myDxx = (REAL*)malloc(numX * sizeof(REAL) * 4);
 
