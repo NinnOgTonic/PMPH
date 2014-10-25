@@ -120,6 +120,9 @@ rollback_kernel_1(unsigned int numX, unsigned int numY, REAL *d_u, PrivGlobs &gl
   d_u[gidI*numY + gidJ] = 0.5*globs.myVarY[gidI*globs.numY+gidJ]*tmp;
 }
 
+/*
+ * shared memory is copied from above, todo
+ *
 __global__ void
 rollback_kernel_2(unsigned int numX, unsigned int numY, REAL *d_u, REAL *d_v, PrivGlobs &globs) {
   REAL tmp;
@@ -149,6 +152,7 @@ rollback_kernel_2(unsigned int numX, unsigned int numY, REAL *d_u, REAL *d_v, Pr
 
   d_u[gidJ*numX + gidI] = dtInv*globs.myResult[gidI*globs.numY+gidJ] + 0.25*globs.myVarX[gidI*globs.numY+gidJ]*tmp + d_v[gidI*numY+gidJ];
 }
+*/
 
 void
 rollback(const unsigned g, PrivGlobs& globs)
