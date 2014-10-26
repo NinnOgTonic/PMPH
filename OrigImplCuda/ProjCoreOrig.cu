@@ -332,8 +332,8 @@ rollback(const unsigned g, PrivGlobs *globs)
 
   rollback_kernel_6
     <<<
-    dim3(globs->numY, DIVUP(globs->numX, 32), 1),
-    dim3(32, 1, 1)
+    dim3(globs->numX, DIVUP(globs->numY, 32), 1),
+    dim3(1, 32, 1)
     >>>
     (globs, a, c, yy);
   checkCudaError(cudaGetLastError());
