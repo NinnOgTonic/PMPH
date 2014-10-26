@@ -180,42 +180,47 @@ rollback_kernel_2(PrivGlobs *globs, REAL *v, REAL *u, REAL dtInv) {
 }
 
 __global__ void
-rollback_kernel_3(PrivGlobs *globs, REAL *a, REAL *b, REAL *c, REAL *yy, REAL dtInv) {
-  const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
+rollback_kernel_3(PrivGlobs *globs, REAL *a, REAL *b, REAL *c, REAL dtInv) {
   const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
-  
+  const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
+  const unsigned int tidJ = threadIdx.y;
+
+  extern __shared__ char sh_mem1[];
+  REAL *sh_mem = (REAL*) sh_mem1;
+
   if(gidI >= globs->numX || gidJ >= globs->numY)
     return;
-  
-  a[gidJ * globs->numX + gidI]  =       - 0.5*0.5*globs->myVarX[gidI*globs->numY+gidJ]*globs->myDxx[4*gidI + 0];
-  b[gidJ * globs->numX + gidI]  = dtInv - 0.5*0.5*globs->myVarX[gidI*globs->numY+gidJ]*globs->myDxx[4*gidI + 1];
-  c[gidJ * globs->numX + gidI]  =       - 0.5*0.5*globs->myVarX[gidI*globs->numY+gidJ]*globs->myDxx[4*gidI + 2];
-  if(gidI > 0) {
-    yy[gidJ * globs->numX + gidI] = -a[gidJ * globs->numX + gidI] * c[gidJ * globs->numX + gidI-1];
+
+  if (tidJ < 3) {
+    sh_mem[tidJ] = -0.25 * globs->myDxx[4*gidI + tidJ];
   }
 
-/*
-  for(j = 0; j < numY; j++) {
-    for(i = 0; i < numX; i++) {
-      a[j*numX + i]  =       - 0.5*0.5*globs->myVarX[i*globs->numY+j]*globs->myDxx[4*i + 0];
-      b[j*numX + i]  = dtInv - 0.5*0.5*globs->myVarX[i*globs->numY+j]*globs->myDxx[4*i + 1];
-      c[j*numX + i]  =       - 0.5*0.5*globs->myVarX[i*globs->numY+j]*globs->myDxx[4*i + 2];
-      if(i > 0) {
-        yy[j*numX + i] = -a[j*numX + i] * c[j*numX + i-1];
-      }
-    }
-  }*/
-  
+  a[gidJ * globs->numX + gidI]  =         globs->myVarX[gidI*globs->numY+gidJ]*sh_mem[0];
+  b[gidJ * globs->numX + gidI]  = dtInv + globs->myVarX[gidI*globs->numY+gidJ]*sh_mem[1];
+  c[gidJ * globs->numX + gidI]  =         globs->myVarX[gidI*globs->numY+gidJ]*sh_mem[2];
 }
 
 __global__ void
-rollback_kernel_4(PrivGlobs *globs, REAL *a, REAL *b, REAL *c, REAL *y, REAL *u, REAL *v, REAL *yy, REAL dtInv) {
-  const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
+rollback_kernel_4(PrivGlobs *globs, REAL *a, REAL *b, REAL *c, REAL *yy, REAL dtInv) {
   const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
-  
+  const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
+
   if(gidI >= globs->numX || gidJ >= globs->numY)
     return;
-  
+
+  a[gidJ * globs->numX + gidI]  =       - 0.25*globs->myVarX[gidI*globs->numY+gidJ]*globs->myDxx[4*gidI + 0];
+  b[gidJ * globs->numX + gidI]  = dtInv - 0.25*globs->myVarX[gidI*globs->numY+gidJ]*globs->myDxx[4*gidI + 1];
+  c[gidJ * globs->numX + gidI]  =       - 0.25*globs->myVarX[gidI*globs->numY+gidJ]*globs->myDxx[4*gidI + 2];
+}
+
+__global__ void
+rollback_kernel_5(PrivGlobs *globs, REAL *a, REAL *b, REAL *c, REAL *y, REAL *u, REAL *v, REAL *yy, REAL dtInv) {
+  const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
+  const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
+
+  if(gidI >= globs->numX || gidJ >= globs->numY)
+    return;
+
   a[gidI * globs->numY + gidJ] =       - 0.5*0.5*globs->myVarX[gidI*globs->numY+gidJ]*globs->myDxx[4*gidI + 0];
   b[gidI * globs->numY + gidJ] = dtInv - 0.5*0.5*globs->myVarX[gidI*globs->numY+gidJ]*globs->myDxx[4*gidI + 1];
   c[gidI * globs->numY + gidJ] =       - 0.5*0.5*globs->myVarX[gidI*globs->numY+gidJ]*globs->myDxx[4*gidI + 2];
@@ -272,21 +277,18 @@ rollback(const unsigned g, PrivGlobs *globs)
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
 
-  /*
   rollback_kernel_3
     <<<
-    dim3(DIVUP(globs->numX, 64), globs->numY, 1),
-    dim3(64, 1, 1)
+    dim3(globs->numX, DIVUP(globs->numY, 32), 1),
+    dim3(1, 32, 1),
+    sizeof(REAL) * 3
     >>>
-    (globs, a, b, c, yy, dtInv);
+    (globs, a, b, c, dtInv);
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
-  */
-  for(j = 0; j < numY; j++) {
-    for(i = 0; i < numX; i++) {
-      a[j*numX + i]  =       - 0.5*0.5*globs->myVarX[i*globs->numY+j]*globs->myDxx[4*i + 0];
-      b[j*numX + i]  = dtInv - 0.5*0.5*globs->myVarX[i*globs->numY+j]*globs->myDxx[4*i + 1];
-      c[j*numX + i]  =       - 0.5*0.5*globs->myVarX[i*globs->numY+j]*globs->myDxx[4*i + 2];
+
+  for(i = 0; i < numX; i++) {
+    for(j = 0; j < numY; j++) {
       if(i > 0) {
         yy[j*numX + i] = -a[j*numX + i] * c[j*numX + i-1];
       }
@@ -298,7 +300,7 @@ rollback(const unsigned g, PrivGlobs *globs)
            &u[j*numX], numX,       &u[j*numX],
            &yy[j*numX]);
   }
- /* 
+ /*
   rollback_kernel_4
     <<<
     dim3(DIVUP(globs->numX, 64), globs->numY, 1),
@@ -319,7 +321,7 @@ rollback(const unsigned g, PrivGlobs *globs)
       }
     }
   }
-  
+
   for(i = 0; i < numX; i++) {
     tridag(&a[i*numY], &b[i*numY], &c[i*numY],
            &y[i*numY], numY,       &globs->myResult[i*numY],
