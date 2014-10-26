@@ -337,16 +337,6 @@ rollback(const unsigned g, PrivGlobs *globs)
       u[j*numX+i] += b[j*numX+i] * u[j*numX+i+1];
     }
   }
- /*
-  rollback_kernel_4
-    <<<
-    dim3(DIVUP(globs->numX, 64), globs->numY, 1),
-    dim3(64, 1, 1)
-    >>>
-    (globs, a, b, c, y, u, v, yy, dtInv);
-  checkCudaError(cudaGetLastError());
-  checkCudaError(cudaThreadSynchronize());
-  */
 
   rollback_kernel_5
     <<<
