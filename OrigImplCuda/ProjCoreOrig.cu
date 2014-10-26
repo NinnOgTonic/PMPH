@@ -259,8 +259,10 @@ tridag_kernel_2(REAL *a, REAL *b, REAL *c, REAL *u, REAL *yy, int numX, int numY
   if(gidI > 0) {
     a[gidJ*numX+gidI] = 1.0 / (c[gidJ*numX+gidI-1] * yy[gidJ*numX+gidI-1] - b[gidJ*numX+gidI] / a[gidJ*numX+gidI]);
   }
-  b[gidJ*numX+gidI] = - c[gidJ*numX+gidI] * yy[gidJ*numX+gidI];
-  u[gidJ*numX+gidI] =   u[gidJ*numX+gidI] * yy[gidJ*numX+gidI];
+
+  REAL cur_yy = yy[gidJ*numX+gidI];
+  b[gidJ*numX+gidI] = - c[gidJ*numX+gidI] * cur_yy;
+  u[gidJ*numX+gidI] =   u[gidJ*numX+gidI] * cur_yy;
 }
 
 __global__ void
@@ -274,12 +276,10 @@ tridag_kernel_3(REAL *u, REAL *a, REAL *b, int numX, int numY) {
   REAL last = u[gidJ*numX];
 
   for(i = 1; i < numX; i++) {
-    last = u[gidJ*numX+i] + a[gidJ*numX+i] * last;
-    u[gidJ*numX+i] = last;
+    last = u[gidJ*numX+i] = u[gidJ*numX+i] + a[gidJ*numX+i] * last;
   }
   for(i = numX-2; i >= 0; i--) {
-    last = u[gidJ*numX+i] + b[gidJ*numX+i] * last;
-    u[gidJ*numX+i] = last;
+    last = u[gidJ*numX+i] = u[gidJ*numX+i] + b[gidJ*numX+i] * last;
   }
 }
 
@@ -299,18 +299,36 @@ tridag_kernel_4(REAL *yy, REAL *b, int numX, int numY) {
 }
 
 __global__ void
-tridag_kernel_5(PrivGlobs *globs, REAL *a, REAL *b, REAL *c, REAL *y, REAL *yy, int numX, int numY) {
-  const unsigned int gidJ = blockIdx.x*blockDim.x + threadIdx.x;
-  const unsigned int gidI = blockIdx.y*blockDim.y + threadIdx.y;
+tridag_kernel_5(REAL *a, REAL *b, REAL *c, REAL *y, REAL *yy, REAL *results, int numX, int numY) {
+  const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
+  const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
 
-  if(gidJ >= numX || gidI >= numY)
+  if(gidI >= numX || gidJ >= numY)
     return;
 
   if(gidJ > 0) {
     a[gidI*numY+gidJ] = 1.0 / (c[gidI*numY+gidJ-1] * yy[gidI*numY+gidJ-1] - b[gidI*numY+gidJ] / a[gidI*numY+gidJ]);
   }
-  b[gidI*numY+gidJ] = - c[gidI*numY+gidJ] * yy[gidI*numY+gidJ];
-  u[gidI*numY+gidJ] =   u[gidI*numY+gidJ] * yy[gidI*numY+gidJ];
+  b[gidI*numY+gidJ]       = - c[gidI*numY+gidJ] * yy[gidI*numY+gidJ];
+  results[gidI*numY+gidJ] =   y[gidI*numY+gidJ] * yy[gidI*numY+gidJ];
+}
+
+__global__ void
+tridag_kernel_6(REAL *results, REAL *a, REAL *b, int numX, int numY) {
+  const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
+  int j;
+
+  if(gidI >= numX)
+    return;
+
+  REAL last = results[gidI*numY];
+
+  for(j = 1; j < numY; j++) {
+    last = results[gidI*numY+j] = results[gidI*numY+j] + a[gidI*numY+j] * last;
+  }
+  for(j = numY-2; j >= 0; j--) {
+    last = results[gidI*numY+j] = results[gidI*numY+j] + b[gidI*numY+j] * last;
+  }
 }
 
 void
@@ -319,8 +337,6 @@ rollback(const unsigned g, PrivGlobs *globs)
   int
     numX = globs->numX,
     numY = globs->numY;
-
-  int i, j;
 
   REAL dtInv = 1.0/(globs->myTimeline[g+1]-globs->myTimeline[g]);
 
@@ -434,36 +450,24 @@ rollback(const unsigned g, PrivGlobs *globs)
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
 
-  // LOOK HERE NOB
-  for(i = 0; i < numX; i++) {
-    for(j = 0; j < numY; j++) {
-      if(j > 0) {
-        a[i*numY+j] = 1.0 / (c[i*numY+j-1] * yy[i*numY+j-1] - b[i*numY+j] / a[i*numY+j]);
-      }
-      b[i*numY+j] = - c[i*numY+j] * yy[i*numY+j];
-      globs->myResult[i*numY+j] = y[i*numY+j] * yy[i*numY+j];
-    }
-  }
-
   tridag_kernel_5
     <<<
     dim3(globs->numX, DIVUP(globs->numY, 32), 1),
     dim3(1, 32, 1)
     >>>
-    (globs, a, b, c, y, yy, numX, numY);
+    (a, b, c, y, yy, globs->myResult, numX, numY);
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
-  // LOOK HERE NOB
 
-  for(i = 0; i < numX; i++) {
-    for(j = 1; j < numY; j++) {
-      globs->myResult[i*numY+j] += a[i*numY+j] * globs->myResult[i*numY+j-1];
-    }
+  tridag_kernel_6
+    <<<
+    dim3(DIVUP(numX, 32), 1, 1),
+    dim3(32, 1, 1)
+    >>>
+    (globs->myResult, a, b, numX, numY);
+  checkCudaError(cudaGetLastError());
+  checkCudaError(cudaThreadSynchronize());
 
-    for(j = numY - 2; j >= 0; j--) {
-      globs->myResult[i*numY+j] += b[i*numY+j] * globs->myResult[i*numY+j+1];
-    }
-  }
   checkCudaError(cudaFreeHost(u));
   checkCudaError(cudaFreeHost(v));
   checkCudaError(cudaFreeHost(a));
