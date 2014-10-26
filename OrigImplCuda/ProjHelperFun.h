@@ -9,6 +9,10 @@
 #include <string.h>
 #include "Constants.h"
 
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+#define DIVUP(x, y) (((x) + (y) - 1) / (y))
+
+
 using namespace std;
 
 static inline void

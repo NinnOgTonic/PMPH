@@ -1,7 +1,7 @@
 CXX        = nvcc
 LIB        = -L$(OPENCL_LIBDIR) -lOpenCL
 
-SOURCES_CPP =ProjectMain.cpp ProjHelperFun.cpp ProjCoreOrig.cu
+SOURCES_CPP =ProjectMain.cpp ProjHelperFun.cu ProjCoreOrig.cu
 HELPERS     =ProhHelperFun.h ../include/Constants.h ../include/ParseInput.h ../include/ParserC.h ../include/OpenmpUtil.h
 OBJECTS     =ProjectMain.o ProjHelperFun.o  ProjCoreOrig.o
 EXECUTABLE  =runproject

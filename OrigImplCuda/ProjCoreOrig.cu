@@ -1,9 +1,6 @@
 #include "ProjHelperFun.h"
 #include "Constants.h"
 
-#define MAX(a, b) (((a) > (b)) ? (a) : (b))
-#define DIVUP(x, y) (((x) + (y) - 1) / (y))
-
 void
 updateParams(const unsigned g,
              const REAL alpha,
