@@ -158,25 +158,6 @@ rollback_kernel_2(PrivGlobs *globs, REAL *v, REAL *u, REAL dtInv) {
      globs->myDxx[4*gidI+2] * sh_mem[lidI + 2]) +
     v[gidI*globs->numY+gidJ] +
     dtInv * globs->myResult[gidI*globs->numY+gidJ];
-
-
-  // // map
-  // for(j = 0; j < numY; j++) {
-  //   // stencil
-  //   for(i = 0; i < numX; i++) {
-  //     REAL tmp = globs->myDxx[4*i+1] * globs->myResult[    i*globs->numY + j];
-
-  //     if(i > 0) {
-  //       tmp += globs->myDxx[4*i+0] * globs->myResult[(i-1)*globs->numY + j];
-  //     }
-
-  //     if(i < numX-1) {
-  //       tmp += globs->myDxx[4*i+2] * globs->myResult[(i+1)*globs->numY + j];
-  //     }
-
-  //     u[j*numX + i] = dtInv*globs->myResult[i*globs->numY+j] + 0.25*globs->myVarX[i*globs->numY+j]*tmp + v[i*numY+j];
-  //   }
-  // }
 }
 
 __global__ void
