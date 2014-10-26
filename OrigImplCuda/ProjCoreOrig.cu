@@ -427,7 +427,7 @@ rollback(const unsigned g, PrivGlobs *globs)
 }
 
 REAL
-value(PrivGlobs *globs,
+value(PrivGlobs &globs,
       const REAL s0,
       const REAL strike,
       const REAL t,
@@ -438,14 +438,14 @@ value(PrivGlobs *globs,
       const unsigned int numY,
       const unsigned int numT)
 {
-  setPayoff(strike, globs);
+  setPayoff(strike, &globs);
 
   for(int i = numT-2; i >= 0; i--) {
-    updateParams(i, alpha, beta, nu, globs);
-    rollback(i, globs);
+    updateParams(i, alpha, beta, nu, &globs);
+    rollback(i, &globs);
   }
 
-  return globs->myResult[globs->myXindex*globs->numY+globs->myYindex];
+  return globs.myResult[globs.myXindex*globs.numY+globs.myYindex];
 }
 
 void
@@ -461,18 +461,16 @@ run_OrigCPU(const unsigned int&   outer,
             REAL*                 res)   // [outer] RESULT
 {
 
-  for(unsigned i = 0; i < outer; i++) {
-    PrivGlobs globs(numX, numY, numT);
-    initGrid(s0, alpha, nu, t, numX, numY, numT, &globs);
-    initOperator(globs.myX, numX, globs.myDxx);
-    initOperator(globs.myY, numY, globs.myDyy);
+  PrivGlobs globs(numX, numY, numT, true);
+  initGrid(s0, alpha, nu, t, numX, numY, numT, &globs);
+  initOperator(globs.myX, numX, globs.myDxx);
+  initOperator(globs.myY, numY, globs.myDyy);
 
-    PrivGlobs *clone = globs.clone();
+  for(unsigned i = 0; i < outer; i++) {
+    PrivGlobs clone = globs.cudaClone();
     res[i] = value(clone,
                    s0,    0.001*i, t,
                    alpha, nu,      beta,
                    numX,  numY,    numT);
-    clone->~PrivGlobs();
-    checkCudaError(cudaFreeHost(clone));
   }
 }
