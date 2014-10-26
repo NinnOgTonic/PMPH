@@ -37,75 +37,46 @@ setPayoff_kernel(REAL* myX, REAL* myResult, unsigned int numX, unsigned int numY
 __global__ void
 rollback_kernel_1(REAL *v, REAL *myResult, REAL *myVarY, REAL *myDyy, int numX, int numY)
 {
-  const unsigned int gidI = blockIdx.y*blockDim.y + threadIdx.y;
-  const unsigned int gidJ = blockIdx.x*blockDim.x + threadIdx.x;
+  const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
+  const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
   const unsigned int gidO = blockIdx.z*blockDim.z + threadIdx.z;
-  const unsigned int lidJ = threadIdx.x;
+  REAL tmp = 0.0;
 
-  extern __shared__ char sh_mem1[];
-  REAL *sh_mem = (REAL*) sh_mem1;
-
-  if(gidI >= numX || gidJ >= numY)
+  if(gidJ >= numY)
     return;
 
-  sh_mem[lidJ + 1] = myResult[(gidO * numX + gidI) * numY + gidJ];
-  if(lidJ == 0) {
-    if (gidJ == 0) {
-      sh_mem[lidJ] = 0;
-    } else {
-      sh_mem[lidJ] = myResult[(gidO * numX + gidI) * numY + gidJ - 1];
-    }
+  if (gidJ > 0) {
+    tmp += myDyy[0 * numY + gidJ] * myResult[(gidO * numX + gidI) * numY + gidJ - 1];
+  }
+  tmp   += myDyy[1 * numY + gidJ] * myResult[(gidO * numX + gidI) * numY + gidJ];
+
+  if (gidJ < numY-1) {
+    tmp += myDyy[2 * numY + gidJ] * myResult[(gidO * numX + gidI) * numY + gidJ + 1];
   }
 
-  if(gidJ == numY-1) {
-    sh_mem[lidJ + 2] = 0;
-  } else if(lidJ == blockDim.x - 1) {
-    sh_mem[lidJ + 2] = myResult[(gidO * numX + gidI) * numY + gidJ + 1];
-  }
-
-  __syncthreads();
-
-  v[(gidO * numX + gidI) * numY + gidJ] = 0.5*myVarY[gidI*numY+gidJ] *
-    (myDyy[0 * numY + gidJ] * sh_mem[lidJ] +
-     myDyy[1 * numY + gidJ] * sh_mem[lidJ + 1] +
-     myDyy[2 * numY + gidJ] * sh_mem[lidJ + 2]);
+  v[(gidO * numX + gidI) * numY + gidJ] = 0.5*myVarY[gidI*numY+gidJ] * tmp;
 }
 
 __global__ void
 rollback_kernel_2(REAL *v, REAL *u, REAL *myResult, REAL *myVarX, REAL *myDxx, REAL dtInv, int numX, int numY) {
-  const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
   const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
+  const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
   const unsigned int gidO = blockIdx.z*blockDim.z + threadIdx.z;
-  const unsigned int lidI = threadIdx.x;
-  const unsigned int lidJ = threadIdx.y;
 
-  extern __shared__ char sh_mem1[];
-  REAL *sh_mem = (REAL*) sh_mem1;
-
-  if(gidI >= numX || gidJ >= numY)
+  if(gidI >= numX)
     return;
 
-  sh_mem[34*lidJ + lidI + 1] = myResult[(gidO * numX + gidI) * numY + gidJ];
-  if(lidI == 0) {
-    if (gidI == 0) {
-      sh_mem[34*lidJ + lidI] = 0;
-    } else {
-      sh_mem[34*lidJ + lidI] = myResult[(gidO * numX + (gidI - 1)) * numY + gidJ];
-    }
+  REAL tmp = 0.0;
+
+  if(gidI > 0) {
+    tmp += myDxx[0 * numX + gidI] * myResult[(gidO * numX + gidI - 1) * numY + gidJ];
+  }
+  tmp   += myDxx[1 * numX + gidI] * myResult[(gidO * numX + gidI + 0) * numY + gidJ];
+  if(gidI < numX-1) {
+    tmp += myDxx[2 * numX + gidI] * myResult[(gidO * numX + gidI + 1) * numY + gidJ];
   }
 
-  if(gidI == numX-1) {
-    sh_mem[34*lidJ + lidI + 2] = 0;
-  } else if(lidI == blockDim.x - 1) {
-    sh_mem[34*lidJ + lidI + 2] = myResult[(gidO * numX + (gidI + 1)) * numY + gidJ];
-  }
-
-  __syncthreads();
-
-  u[(gidO * numY + gidJ) * numX + gidI] = 0.25*myVarX[ gidI * numY + gidJ] *
-    (myDxx[0 * numX + gidI] * sh_mem[34 * lidJ + lidI] +
-     myDxx[1 * numX + gidI] * sh_mem[34 * lidJ + lidI + 1] +
-     myDxx[2 * numX + gidI] * sh_mem[34 * lidJ + lidI + 2]) +
+  u[(gidO * numY + gidJ) * numX + gidI] = 0.25*myVarX[ gidI * numY + gidJ] * tmp +
     v[(gidO * numX + gidI) * numY + gidJ] +
     dtInv * myResult[(gidO * numX + gidI) * numY + gidJ];
 }
@@ -115,23 +86,13 @@ rollback_kernel_3(REAL *a, REAL *b, REAL *c, REAL *myVarX, REAL *myDxx, REAL dtI
   const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
   const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
   const unsigned int gidO = blockIdx.z*blockDim.z + threadIdx.z;
-  const unsigned int tidJ = threadIdx.y;
 
-  extern __shared__ char sh_mem1[];
-  REAL *sh_mem = (REAL*) sh_mem1;
-
-  if(gidI >= numX || gidJ >= numY)
+  if(gidJ >= numY)
     return;
 
-  if (tidJ < 3) {
-    sh_mem[tidJ] = -0.25 * myDxx[tidJ * numX + gidI];
-  }
-
-  __syncthreads();
-
-  a[(gidO * numY + gidJ) * numX + gidI]  =         myVarX[gidI * numY + gidJ] * sh_mem[0];
-  b[(gidO * numY + gidJ) * numX + gidI]  = dtInv + myVarX[gidI * numY + gidJ] * sh_mem[1];
-  c[(gidO * numY + gidJ) * numX + gidI]  =         myVarX[gidI * numY + gidJ] * sh_mem[2];
+  a[(gidO * numY + gidJ) * numX + gidI]  =       - 0.25 * myVarX[gidI * numY + gidJ] * myDxx[0 * numX + gidI];
+  b[(gidO * numY + gidJ) * numX + gidI]  = dtInv - 0.25 * myVarX[gidI * numY + gidJ] * myDxx[1 * numX + gidI];
+  c[(gidO * numY + gidJ) * numX + gidI]  =       - 0.25 * myVarX[gidI * numY + gidJ] * myDxx[2 * numX + gidI];
 }
 
 __global__ void
@@ -140,7 +101,7 @@ rollback_kernel_4(REAL *a, REAL *c, REAL *yy, int numX, int numY) {
   const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
   const unsigned int gidO = blockIdx.z*blockDim.z + threadIdx.z;
 
-  if(gidI >= numX || gidJ >= numY)
+  if(gidJ >= numY)
     return;
 
   yy[(gidO * numY + gidJ) * numX + gidI] = -a[(gidO * numY + gidJ) * numX + gidI] * c[(gidO * numY + gidJ) * numX + gidI-1];
@@ -151,23 +112,13 @@ rollback_kernel_5(REAL *a, REAL *b, REAL *c, REAL *y, REAL *u, REAL *v, REAL *yy
   const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
   const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
   const unsigned int gidO = blockIdx.z*blockDim.z + threadIdx.z;
-  const unsigned int tidJ = threadIdx.y;
 
-  extern __shared__ char sh_mem1[];
-  REAL *sh_mem = (REAL*) sh_mem1;
-
-  if(gidI >= numX || gidJ >= numY)
+  if(gidJ >= numY)
     return;
 
-  if (tidJ < 3) {
-    sh_mem[tidJ] = -0.25 * myDyy[tidJ * numY + gidJ];
-  }
-
-  __syncthreads();
-
-  a[(gidO * numX + gidI) * numY + gidJ] =         myVarY[gidI * numY + gidJ] * sh_mem[0];
-  b[(gidO * numX + gidI) * numY + gidJ] = dtInv + myVarY[gidI * numY + gidJ] * sh_mem[1];
-  c[(gidO * numX + gidI) * numY + gidJ] =         myVarY[gidI * numY + gidJ] * sh_mem[2];
+  a[(gidO * numX + gidI) * numY + gidJ] =       - 0.25 * myVarY[gidI * numY + gidJ] * myDyy[0 * numY + gidJ];
+  b[(gidO * numX + gidI) * numY + gidJ] = dtInv - 0.25 * myVarY[gidI * numY + gidJ] * myDyy[1 * numY + gidJ];
+  c[(gidO * numX + gidI) * numY + gidJ] =       - 0.25 * myVarY[gidI * numY + gidJ] * myDyy[2 * numY + gidJ];
   y[(gidO * numX + gidI) * numY + gidJ] = dtInv * u[(gidO * numY + gidJ) * numX + gidI] - 0.5 * v[(gidO * numX + gidI) * numY + gidJ];
 
 }
@@ -178,7 +129,7 @@ rollback_kernel_6(REAL *a, REAL *c, REAL *yy, int numX, int numY) {
   const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
   const unsigned int gidO = blockIdx.z*blockDim.z + threadIdx.z;
 
-  if(gidI >= numX || gidJ >= numY)
+  if(gidJ >= numY)
     return;
 
   if(gidJ > 0) {
@@ -208,11 +159,16 @@ tridag_kernel_2(REAL *a, REAL *b, REAL *c, REAL *u, REAL *yy, int numX, int numY
   const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
   const unsigned int gidO = blockIdx.z*blockDim.z + threadIdx.z;
 
-  if(gidI >= numX || gidJ >= numY)
+  if(gidI >= numX)
     return;
 
   if(gidI > 0) {
-    a[(gidO * numY + gidJ) * numX + gidI] = 1.0 / (c[(gidO * numY + gidJ) * numX + gidI - 1] * yy[(gidO * numY + gidJ) * numX + gidI - 1] - b[(gidO * numY + gidJ) * numX + gidI] / a[(gidO * numY + gidJ) * numX + gidI]);
+    a    [(gidO * numY + gidJ) * numX + gidI] = 1.0 /
+      (c [(gidO * numY + gidJ) * numX + gidI - 1] *
+       yy[(gidO * numY + gidJ) * numX + gidI - 1] -
+       b [(gidO * numY + gidJ) * numX + gidI] /
+       a [(gidO * numY + gidJ) * numX + gidI]
+       );
   }
 
   REAL cur_yy = yy[(gidO * numY + gidJ) * numX + gidI];
@@ -261,7 +217,7 @@ tridag_kernel_5(REAL *a, REAL *b, REAL *c, REAL *y, REAL *yy, REAL *myResult, in
   const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
   const unsigned int gidO = blockIdx.z*blockDim.z + threadIdx.z;
 
-  if(gidI >= numX || gidJ >= numY)
+  if(gidJ >= numY)
     return;
 
   if(gidJ > 0) {
@@ -315,9 +271,8 @@ rollback(const REAL dtInv, PrivGlobs &globs)
   /* v = func(myResult, myVarY, myDyy) */
   rollback_kernel_1
     <<<
-    dim3(DIVUP(globs.numY, 32), globs.numX, globs.numO),
-    dim3(32, 1, 1),
-    sizeof(REAL) * (32 + 2)
+    dim3(globs.numX, DIVUP(globs.numY, 32), globs.numO),
+    dim3(1, 32, 1)
     >>>
     (globs.v, globs.myResult, globs.myVarY, globs.myDyy, globs.numX, globs.numY);
   checkCudaError(cudaGetLastError());
@@ -328,9 +283,8 @@ rollback(const REAL dtInv, PrivGlobs &globs)
   /* u = func(myResult, myVarX, myDxx, dtInv, v) */
   rollback_kernel_2
     <<<
-    dim3(DIVUP(globs.numX, 32), DIVUP(globs.numY, 32), globs.numO),
-    dim3(32, 32, 1),
-    sizeof(REAL) * (32 + 2) * 32
+    dim3(DIVUP(globs.numX, 128), globs.numY, globs.numO),
+    dim3(128, 1, 1)
     >>>
     (globs.v, globs.u, globs.myResult, globs.myVarX, globs.myDxx, dtInv, globs.numX, globs.numY);
   checkCudaError(cudaGetLastError());
@@ -344,8 +298,7 @@ rollback(const REAL dtInv, PrivGlobs &globs)
   rollback_kernel_3
     <<<
     dim3(globs.numX, DIVUP(globs.numY, 32), globs.numO),
-    dim3(1, 32, 1),
-    sizeof(REAL) * 3
+    dim3(1, 32, 1)
     >>>
     (globs.a, globs.b, globs.c, globs.myVarX, globs.myDxx, dtInv, globs.numX, globs.numY);
   checkCudaError(cudaGetLastError());
@@ -365,7 +318,6 @@ rollback(const REAL dtInv, PrivGlobs &globs)
 
   end(&counters[3]); start();
 
-
   /* yy = func(b, yy[i-1]) */
   tridag_kernel_1
     <<<
@@ -383,8 +335,8 @@ rollback(const REAL dtInv, PrivGlobs &globs)
      u = func(u, yy) */
   tridag_kernel_2
     <<<
-    dim3(DIVUP(globs.numX, 32), globs.numY, globs.numO),
-    dim3(32, 1, 1)
+    dim3(DIVUP(globs.numX, 64), globs.numY, globs.numO),
+    dim3(64, 1, 1)
     >>>
     (globs.a, globs.b, globs.c, globs.u, globs.yy, globs.numX, globs.numY);
   checkCudaError(cudaGetLastError());
@@ -408,8 +360,7 @@ rollback(const REAL dtInv, PrivGlobs &globs)
   rollback_kernel_5
     <<<
     dim3(globs.numX, DIVUP(globs.numY, 32), globs.numO),
-    dim3(1, 32, 1),
-    sizeof(REAL) * 3
+    dim3(1, 32, 1)
     >>>
     (globs.a, globs.b, globs.c, globs.y, globs.u, globs.v, globs.yy, globs.myDyy, globs.myVarY, dtInv, globs.numX, globs.numY);
   checkCudaError(cudaGetLastError());
@@ -518,6 +469,6 @@ run_OrigCPU(const unsigned int   outer,
         alpha, nu,   beta,
         res);
   for(int i = 0; i <= 11; i++) {
-    printf("%lld %d\n", i, counters[i]);
+    printf("%llu %u\n", counters[i], i);
   }
 }
