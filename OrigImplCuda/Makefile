@@ -20,13 +20,13 @@ $(EXECUTABLE): $(OBJECTS)
 	nvcc -g -I ../include --compiler-options -Wall -O3 -arch=sm_35 -o $@ $^
 
 run_small: $(EXECUTABLE)
-	cat ../Data/Small/input.data ../Data/Small/output.data | ./$(EXECUTABLE)
+	cat ../Data/Small/input.data ../Data/Small/output.data | time ./$(EXECUTABLE)
 
 run_medium: $(EXECUTABLE)
-	cat ../Data/Medium/input.data ../Data/Medium/output.data | ./$(EXECUTABLE)
+	cat ../Data/Medium/input.data ../Data/Medium/output.data | time ./$(EXECUTABLE)
 
 run_large: $(EXECUTABLE)
-	cat ../Data/Large/input.data ../Data/Large/output.data | ./$(EXECUTABLE)
+	cat ../Data/Large/input.data ../Data/Large/output.data | time ./$(EXECUTABLE)
 
 clean:
 	rm -f Debug.txt $(EXECUTABLE) $(OBJECTS)

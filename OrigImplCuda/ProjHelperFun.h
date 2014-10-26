@@ -57,52 +57,42 @@ struct PrivGlobs {
 
   PrivGlobs(const unsigned int& numX,
             const unsigned int& numY,
-            const unsigned int& numT,
-            const bool useCuda)
+            const unsigned int& numT)
   {
     this->numX = numX;
     this->numY = numY;
     this->numT = numT;
-    if(useCuda) {
-      checkCudaError(cudaMallocHost(&this->myX,        numX * sizeof(REAL)));
-      checkCudaError(cudaMallocHost(&this->myDxx,      numX * sizeof(REAL) * 4));
-      checkCudaError(cudaMallocHost(&this->myY,        numY * sizeof(REAL)));
-      checkCudaError(cudaMallocHost(&this->myDyy,      numY * sizeof(REAL) * 4));
-      checkCudaError(cudaMallocHost(&this->myTimeline, numT * sizeof(REAL)));
-      checkCudaError(cudaMallocHost(&this->myVarX,     numX * numY * sizeof(REAL)));
-      checkCudaError(cudaMallocHost(&this->myVarY,     numX * numY * sizeof(REAL)));
-      checkCudaError(cudaMallocHost(&this->myResult,   numX * numY * sizeof(REAL)));
-      checkCudaError(cudaMalloc(&this->u,              numY * numX * sizeof(REAL)));
-      checkCudaError(cudaMalloc(&this->v,              numY * numX * sizeof(REAL)));
-      checkCudaError(cudaMalloc(&this->a,              numY * numX * sizeof(REAL)));
-      checkCudaError(cudaMalloc(&this->b,              numY * numX * sizeof(REAL)));
-      checkCudaError(cudaMalloc(&this->c,              numY * numX * sizeof(REAL)));
-      checkCudaError(cudaMalloc(&this->y,              numY * numX * sizeof(REAL)));
-      checkCudaError(cudaMalloc(&this->yy,             numY * numX * sizeof(REAL)));
 
-    } else {
-      this->myX        = (REAL*) malloc(numX * sizeof(REAL));
-      this->myDxx      = (REAL*) malloc(numX * sizeof(REAL) * 4);
-      this->myY        = (REAL*) malloc(numY * sizeof(REAL));
-      this->myDyy      = (REAL*) malloc(numY * sizeof(REAL) * 4);
-      this->myTimeline = (REAL*) malloc(numT * sizeof(REAL));
-      this->myVarX     = (REAL*) malloc(numX * numY * sizeof(REAL));
-      this->myVarY     = (REAL*) malloc(numX * numY * sizeof(REAL));
-      this->myResult   = (REAL*) malloc(numX * numY * sizeof(REAL));
-    }
+    checkCudaError(cudaMalloc(&this->myX,        numX        * sizeof(REAL)));
+    checkCudaError(cudaMalloc(&this->myDxx,      numX * 3    * sizeof(REAL)));
+    checkCudaError(cudaMalloc(&this->myY,        numY        * sizeof(REAL)));
+    checkCudaError(cudaMalloc(&this->myDyy,      numY * 3    * sizeof(REAL)));
+    checkCudaError(cudaMalloc(&this->myVarX,     numX * numY * sizeof(REAL)));
+    checkCudaError(cudaMalloc(&this->myVarY,     numX * numY * sizeof(REAL)));
+    checkCudaError(cudaMalloc(&this->myResult,   numX * numY * sizeof(REAL)));
+    checkCudaError(cudaMalloc(&this->u,          numY * numX * sizeof(REAL)));
+    checkCudaError(cudaMalloc(&this->v,          numY * numX * sizeof(REAL)));
+    checkCudaError(cudaMalloc(&this->a,          numY * numX * sizeof(REAL)));
+    checkCudaError(cudaMalloc(&this->b,          numY * numX * sizeof(REAL)));
+    checkCudaError(cudaMalloc(&this->c,          numY * numX * sizeof(REAL)));
+    checkCudaError(cudaMalloc(&this->y,          numY * numX * sizeof(REAL)));
+    checkCudaError(cudaMalloc(&this->yy,         numY * numX * sizeof(REAL)));
+
+    this->myTimeline = (REAL*) malloc(numT * sizeof(REAL));
   }
 
   PrivGlobs cudaClone() {
-    PrivGlobs other(this->numX, this->numY, this->numT, true);
+    PrivGlobs other(this->numX, this->numY, this->numT);
 
-    memcpy(other.myX,         this->myX,        numX * sizeof(REAL));
-    memcpy(other.myDxx,       this->myDxx,      numX * sizeof(REAL) * 4);
-    memcpy(other.myY,         this->myY,        numY * sizeof(REAL));
-    memcpy(other.myDyy,       this->myDyy,      numY * sizeof(REAL) * 4);
-    memcpy(other.myTimeline,  this->myTimeline, numT * sizeof(REAL));
-    memcpy(other.myVarX,      this->myVarX,     numX * numY * sizeof(REAL));
-    memcpy(other.myVarY,      this->myVarY,     numX * numY * sizeof(REAL));
-    memcpy(other.myResult,    this->myResult,   numX * numY * sizeof(REAL));
+    cudaMemcpy(other.myX,         this->myX,        numX        * sizeof(REAL), cudaMemcpyDeviceToDevice);
+    cudaMemcpy(other.myDxx,       this->myDxx,      numX * 3    * sizeof(REAL), cudaMemcpyDeviceToDevice);
+    cudaMemcpy(other.myY,         this->myY,        numY        * sizeof(REAL), cudaMemcpyDeviceToDevice);
+    cudaMemcpy(other.myDyy,       this->myDyy,      numY * 3    * sizeof(REAL), cudaMemcpyDeviceToDevice);
+    cudaMemcpy(other.myVarX,      this->myVarX,     numX * numY * sizeof(REAL), cudaMemcpyDeviceToDevice);
+    cudaMemcpy(other.myVarY,      this->myVarY,     numX * numY * sizeof(REAL), cudaMemcpyDeviceToDevice);
+    cudaMemcpy(other.myResult,    this->myResult,   numX * numY * sizeof(REAL), cudaMemcpyDeviceToDevice);
+
+    memcpy(other.myTimeline,  this->myTimeline, numT        * sizeof(REAL));
 
     other.myXindex = this->myXindex;
     other.myYindex = this->myYindex;
@@ -111,14 +101,14 @@ struct PrivGlobs {
   }
 
   ~PrivGlobs() {
-    checkCudaError(cudaFreeHost(this->myX));
-    checkCudaError(cudaFreeHost(this->myDxx));
-    checkCudaError(cudaFreeHost(this->myY));
-    checkCudaError(cudaFreeHost(this->myDyy));
-    checkCudaError(cudaFreeHost(this->myTimeline));
-    checkCudaError(cudaFreeHost(this->myVarX));
-    checkCudaError(cudaFreeHost(this->myVarY));
-    checkCudaError(cudaFreeHost(this->myResult));
+    checkCudaError(cudaFree(this->myX));
+    checkCudaError(cudaFree(this->myDxx));
+    checkCudaError(cudaFree(this->myY));
+    checkCudaError(cudaFree(this->myDyy));
+    free(this->myTimeline);
+    checkCudaError(cudaFree(this->myVarX));
+    checkCudaError(cudaFree(this->myVarY));
+    checkCudaError(cudaFree(this->myResult));
   }
 };
 

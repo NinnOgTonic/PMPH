@@ -23,13 +23,11 @@ initGrid(const REAL s0,
          const unsigned numT,
          PrivGlobs *globs)
 {
-  REAL *tmp = (REAL*) malloc(sizeof(REAL) * MAX(numX, MAX(numY, numT)));
+  REAL *tmp = (REAL*) malloc(sizeof(REAL) * MAX(numX, numY));
 
   for(unsigned i = 0; i < numT; i++) {
-    tmp[i] = t*i/(numT-1);
+    globs->myTimeline[i] = t*i/(numT-1);
   }
-
-  memcpy(globs->myTimeline, tmp, sizeof(REAL) * numT);
 
   const REAL stdX = 20.0*alpha*s0*sqrt(t);
   const REAL dx = stdX/numX;
@@ -39,7 +37,7 @@ initGrid(const REAL s0,
   for(unsigned i = 0; i < numX; i++) {
     tmp[i] = i*dx - globs->myXindex*dx + s0;
   }
-  memcpy(globs->myX, tmp, sizeof(REAL) * numX);
+  cudaMemcpy(globs->myX, tmp, sizeof(REAL) * numX, cudaMemcpyHostToDevice);
 
 
   const REAL stdY = 10.0*nu*sqrt(t);
@@ -50,7 +48,7 @@ initGrid(const REAL s0,
   for(unsigned i = 0; i < numY; i++) {
     tmp[i] = i*dy - globs->myYindex*dy + logAlpha;
   }
-  memcpy(globs->myY, tmp, sizeof(REAL) * numY);
+  cudaMemcpy(globs->myY, tmp, sizeof(REAL) * numY, cudaMemcpyHostToDevice);
   free(tmp);
 }
 
@@ -67,19 +65,17 @@ initOperatorKernel(const REAL *x, const unsigned n, REAL *Dxx)
   const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
   REAL dxl, dxu;
 
-  if(gidI == 0 || gidI == n) {
-    Dxx[gidI * 4 + 0] =  0.0;
-    Dxx[gidI * 4 + 1] =  0.0;
-    Dxx[gidI * 4 + 2] =  0.0;
-    Dxx[gidI * 4 + 3] =  0.0;
-  } else if(gidI < n) {
+  if(gidI == 0 || gidI == n-1) {
+    Dxx[0 * n + gidI] =  0.0;
+    Dxx[1 * n + gidI] =  0.0;
+    Dxx[2 * n + gidI] =  0.0;
+  } else if(gidI < n-1) {
     dxl      = x[gidI]   - x[gidI-1];
     dxu      = x[gidI+1] - x[gidI];
 
-    Dxx[gidI * 4 + 0] =  2.0/dxl/(dxl+dxu);
-    Dxx[gidI * 4 + 1] = -2.0*(1.0/dxl + 1.0/dxu)/(dxl+dxu);
-    Dxx[gidI * 4 + 2] =  2.0/dxu/(dxl+dxu);
-    Dxx[gidI * 4 + 3] =  0.0;
+    Dxx[0 * n + gidI] =  2.0/dxl/(dxl+dxu);
+    Dxx[1 * n + gidI] = -2.0*(1.0/dxl + 1.0/dxu)/(dxl+dxu);
+    Dxx[2 * n + gidI] =  2.0/dxu/(dxl+dxu);
   }
 }
 
@@ -93,39 +89,7 @@ initOperator(const REAL *x, const unsigned n, REAL *Dxx)
     dim3(DIVUP(n, 32), 1, 1),
     dim3(32, 1, 1)
     >>>
-    (x, n-1, Dxx);
+    (x, n, Dxx);
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
-
-  // REAL dxl, dxu;
-
-  // //  lower boundary
-  // dxl    =  0.0;
-  // dxu    =  x[1] - x[0];
-
-  // Dxx[0] =  0.0;
-  // Dxx[1] =  0.0;
-  // Dxx[2] =  0.0;
-  // Dxx[3] =  0.0;
-
-  // //  standard case
-  // for(unsigned i=1;i<n-1;i++)
-  //   {
-  //     dxl      = x[i]   - x[i-1];
-  //     dxu      = x[i+1] - x[i];
-
-  //     Dxx[i * 4 + 0] =  2.0/dxl/(dxl+dxu);
-  //     Dxx[i * 4 + 1] = -2.0*(1.0/dxl + 1.0/dxu)/(dxl+dxu);
-  //     Dxx[i * 4 + 2] =  2.0/dxu/(dxl+dxu);
-  //     Dxx[i * 4 + 3] =  0.0;
-  //   }
-
-  // //  upper boundary
-  // dxl      =  x[n-1] - x[n-2];
-  // dxu      =  0.0;
-
-  // Dxx[(n-1) * 4 + 0] = 0.0;
-  // Dxx[(n-1) * 4 + 1] = 0.0;
-  // Dxx[(n-1) * 4 + 2] = 0.0;
-  // Dxx[(n-1) * 4 + 3] = 0.0;
 }

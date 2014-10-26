@@ -14,15 +14,17 @@ updateParams_kernel(const REAL alpha, const REAL beta, const REAL nu, REAL *myVa
 
 }
 
-void
-setPayoff(const REAL strike, PrivGlobs *globs)
-{
-  for(unsigned i=0; i < globs->numX; i++)
-    {
-      REAL payoff = MAX(globs->myX[i]-strike, (REAL)0.0);
-      for(unsigned j=0; j<globs->numY; j++)
-        globs->myResult[i*globs->numY+j] = payoff;
-    }
+__global__ void
+setPayoff_kernel(REAL strike, REAL* myX, REAL* myResult, unsigned int numX, unsigned int numY){
+  const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
+  const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
+
+  if(gidI >= numX || gidJ >= numY)
+    return;
+
+  REAL payoff = MAX(myX[gidI] - strike, (REAL)0.0);
+  myResult[gidI * numY + gidJ] = payoff;
+
 }
 
 __global__ void
@@ -55,9 +57,9 @@ rollback_kernel_1(REAL *v, REAL *myResult, REAL *myVarY, REAL *myDyy, int numX, 
   __syncthreads();
 
   v[gidI*numY + gidJ] = 0.5*myVarY[gidI*numY+gidJ] *
-    (myDyy[4*gidJ+0] * sh_mem[lidJ] +
-     myDyy[4*gidJ+1] * sh_mem[lidJ + 1] +
-     myDyy[4*gidJ+2] * sh_mem[lidJ + 2]);
+    (myDyy[0 * numY + gidJ] * sh_mem[lidJ] +
+     myDyy[1 * numY + gidJ] * sh_mem[lidJ + 1] +
+     myDyy[2 * numY + gidJ] * sh_mem[lidJ + 2]);
 }
 
 __global__ void
@@ -90,9 +92,9 @@ rollback_kernel_2(REAL *v, REAL *u, REAL *myResult, REAL *myVarX, REAL *myDxx, R
   __syncthreads();
 
   u[gidJ*numX + gidI] = 0.25*myVarX[gidI*numY+gidJ] *
-    (myDxx[4*gidI+0] * sh_mem[lidI] +
-     myDxx[4*gidI+1] * sh_mem[lidI + 1] +
-     myDxx[4*gidI+2] * sh_mem[lidI + 2]) +
+    (myDxx[0 * numX + gidI] * sh_mem[lidI] +
+     myDxx[1 * numX + gidI] * sh_mem[lidI + 1] +
+     myDxx[2 * numX + gidI] * sh_mem[lidI + 2]) +
     v[gidI*numY+gidJ] +
     dtInv * myResult[gidI*numY+gidJ];
 }
@@ -110,7 +112,7 @@ rollback_kernel_3(REAL *a, REAL *b, REAL *c, REAL *myVarX, REAL *myDxx, REAL dtI
     return;
 
   if (tidJ < 3) {
-    sh_mem[tidJ] = -0.25 * myDxx[4*gidI + tidJ];
+    sh_mem[tidJ] = -0.25 * myDxx[tidJ * numX + gidI];
   }
 
   __syncthreads();
@@ -144,7 +146,7 @@ rollback_kernel_5(REAL *a, REAL *b, REAL *c, REAL *y, REAL *u, REAL *v, REAL *yy
     return;
 
   if (tidJ < 3) {
-    sh_mem[tidJ] = -0.25 * myDyy[4*gidJ + tidJ];
+    sh_mem[tidJ] = -0.25 * myDyy[tidJ * numY + gidJ];
   }
 
   __syncthreads();
@@ -268,12 +270,8 @@ tridag_kernel_6(REAL *results, REAL *a, REAL *b, int numX, int numY) {
 }
 
 void
-rollback(const unsigned g, PrivGlobs &globs)
+rollback(const REAL dtInv, PrivGlobs &globs)
 {
-  REAL timeline[2];
-  memcpy(timeline, &globs.myTimeline[g], sizeof(REAL)*2);
-  REAL dtInv = 1.0/(timeline[1] - timeline[0]);
-
   rollback_kernel_1
     <<<
     dim3(globs.numX, DIVUP(globs.numY, 64), 1),
@@ -409,7 +407,12 @@ value(PrivGlobs &globs,
 {
   REAL res;
 
-  setPayoff(strike, &globs);
+  setPayoff_kernel
+    <<<
+    dim3(numX, DIVUP(numY, 32), 1),
+    dim3(1, 32, 1)
+    >>>
+    (strike, globs.myX, globs.myResult, numX, numY);
 
   for(int i = numT-2; i >= 0; i--) {
     updateParams_kernel
@@ -421,10 +424,10 @@ value(PrivGlobs &globs,
     checkCudaError(cudaGetLastError());
     checkCudaError(cudaThreadSynchronize());
 
-    rollback(i, globs);
+    rollback(1.0 / (globs.myTimeline[i+1] - globs.myTimeline[i]), globs);
   }
 
-  memcpy(&res, &globs.myResult[globs.myXindex*globs.numY+globs.myYindex], sizeof(REAL));
+  cudaMemcpy(&res, &globs.myResult[globs.myXindex*globs.numY+globs.myYindex], sizeof(REAL), cudaMemcpyDeviceToHost);
 
   return res;
 }
@@ -441,8 +444,7 @@ run_OrigCPU(const unsigned int&   outer,
             const REAL&           beta,
             REAL*                 res)   // [outer] RESULT
 {
-
-  PrivGlobs globs(numX, numY, numT, true);
+  PrivGlobs globs(numX, numY, numT);
   initGrid(s0, alpha, nu, t, numX, numY, numT, &globs);
   initOperator(globs.myX, numX, globs.myDxx);
   initOperator(globs.myY, numY, globs.myDyy);
