@@ -15,14 +15,26 @@ updateParams_kernel(const unsigned g, const REAL alpha, const REAL beta, const R
 }
 
 void
-setPayoff(const REAL strike, PrivGlobs *globs)
-{
-  for(unsigned i=0; i < globs->numX; i++)
-    {
-      REAL payoff = MAX(globs->myX[i]-strike, (REAL)0.0);
-      for(unsigned j=0; j<globs->numY; j++)
+setPayoff(const REAL strike, PrivGlobs *globs){
+  for(unsigned i=0; i < globs->numX; i++){
+      for(unsigned j=0; j<globs->numY; j++){
+     	REAL payoff = MAX(globs->myX[i]-strike, (REAL)0.0);
         globs->myResult[i*globs->numY+j] = payoff;
+      }
     }
+}
+
+__global__ void
+setPayoff_kernel(REAL strike, REAL* myX, REAL* myResult, unsigned int numX, unsigned int numY){
+  const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
+  const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
+
+  if(gidI >= numX || gidJ >= numY)
+    return;
+
+  REAL payoff = MAX(myX[gidI] - strike, (REAL)0.0);
+  myResult[gidI * numY + gidJ] = payoff;
+
 }
 
 __global__ void
@@ -425,7 +437,13 @@ value(PrivGlobs &globs,
       const unsigned int numY,
       const unsigned int numT)
 {
-  setPayoff(strike, &globs);
+  //setPayoff(strike, &globs);
+  setPayoff_kernel
+    <<<
+    dim3(numX, DIVUP(numY, 32), 1),
+    dim3(1, 32, 1)
+    >>>
+    (strike, globs.myX, globs.myResult, numX, numY);
 
   for(int i = numT-2; i >= 0; i--) {
     updateParams_kernel
