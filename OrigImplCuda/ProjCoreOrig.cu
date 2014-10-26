@@ -283,6 +283,22 @@ tridag_kernel_3(REAL *u, REAL *a, REAL *b, int numX, int numY) {
   }
 }
 
+__global__ void
+tridag_kernel_4(REAL *yy, REAL *b, int numX, int numY) {
+  const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
+  int j;
+
+  if(gidI >= numX)
+    return;
+
+  REAL last = yy[gidI*numY] = 1.0 / b[gidI*numY];
+
+  for(j = 1; j < numY; j++) {
+    last = yy[gidI*numY+j] = 1.0 / (b[gidI*numY+j] + yy[gidI*numY+j] * last);
+  }
+}
+
+
 void
 rollback(const unsigned g, PrivGlobs *globs)
 {
@@ -367,7 +383,6 @@ rollback(const unsigned g, PrivGlobs *globs)
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
 
-
   tridag_kernel_3
     <<<
     dim3(1, DIVUP(numY, 32), 1),
@@ -396,12 +411,14 @@ rollback(const unsigned g, PrivGlobs *globs)
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
 
-  for(i = 0; i < numX; i++) {
-    yy[i*numY] = 1.0 / b[i*numY];
-    for(j = 1; j < numY; j++) {
-      yy[i*numY+j] = 1.0 / (b[i*numY+j] + yy[i*numY+j] * yy[i*numY+j-1]);
-    }
-  }
+  tridag_kernel_4
+    <<<
+    dim3(DIVUP(numX, 32), 1, 1),
+    dim3(32, 1, 1)
+    >>>
+    (yy, b, numX, numY);
+  checkCudaError(cudaGetLastError());
+  checkCudaError(cudaThreadSynchronize());
 
   for(i = 0; i < numX; i++) {
     for(j = 0; j < numY; j++) {
