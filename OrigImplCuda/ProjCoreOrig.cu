@@ -1,40 +1,16 @@
 #include "ProjHelperFun.h"
 #include "Constants.h"
 
-void
-updateParams(const unsigned g,
-             const REAL alpha,
-             const REAL beta,
-             const REAL nu,
-             PrivGlobs *globs)
-{
-  for(unsigned i = 0; i < globs->numX; i++)
-    for(unsigned j = 0; j < globs->numY; j++) {
-      globs->myVarX[i*globs->numY+j] = exp(2.0*(
-                                                beta*log(globs->myX[i])
-                                                + globs->myY[j]
-                                                - 0.5*nu*nu*globs->myTimeline[g] )
-                                           );
-      globs->myVarY[i*globs->numY+j] = exp(2.0*(
-                                                alpha*log(globs->myX[i])
-                                                + globs->myY[j]
-                                                - 0.5*nu*nu*globs->myTimeline[g]
-                                                )
-                                           ); // nu*nu
-    }
-}
-
-
 __global__ void
-updateParams_kernel(const unsigned g, const REAL alpha, const REAL beta, const REAL nu, REAL *myVarX, REAL *myVarY, REAL *myX, REAL *myY, REAL *myTimeline, unsigned int numY) {
+updateParams_kernel(const unsigned g, const REAL alpha, const REAL beta, const REAL nu, REAL *myVarX, REAL *myVarY, REAL *myX, REAL *myY, REAL *myTimeline, int numX, int numY) {
   const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x + 1;
   const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
 
   if(gidI >= numX || gidJ >= numY)
     return;
 
-  myVarX[gidI * numY + gidJ] =  exp(2.0 * (beta * log(myX[gidI]) + myY[gidJ] - 0.5 * nu * nu * myTimeline[g])); 
-  myVarY[gidI * numY + gidJ] =  exp(2.0 * (alpha * log(myX[gidI]) + myY[gidJ] - 0.5 * nu * nu * myTimeline[g])); 
+  myVarX[gidI * numY + gidJ] =  exp(2.0 * (beta * log(myX[gidI]) + myY[gidJ] - 0.5 * nu * nu * myTimeline[g]));
+  myVarY[gidI * numY + gidJ] =  exp(2.0 * (alpha * log(myX[gidI]) + myY[gidJ] - 0.5 * nu * nu * myTimeline[g]));
 
 }
 
@@ -452,13 +428,12 @@ value(PrivGlobs &globs,
   setPayoff(strike, &globs);
 
   for(int i = numT-2; i >= 0; i--) {
-    //updateParams(i, alpha, beta, nu, &globs);
     updateParams_kernel
-    <<<
-    dim3(numX, DIVUP(numY, 32), 1),
-    dim3(1, 32, 1)
-    >>>
-    (i, alpha, beta, nu, globs.myVarX, globs.myVarY, globs.myX, globs.myY, globs.myTimeline, numY);
+      <<<
+      dim3(numX, DIVUP(numY, 32), 1),
+      dim3(1, 32, 1)
+      >>>
+      (i, alpha, beta, nu, globs.myVarX, globs.myVarY, globs.myX, globs.myY, globs.myTimeline, numX, numY);
     checkCudaError(cudaGetLastError());
     checkCudaError(cudaThreadSynchronize());
 
