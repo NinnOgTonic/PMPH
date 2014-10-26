@@ -39,13 +39,13 @@ setPayoff(const REAL strike, PrivGlobs *globs)
 }
 
 inline void
-tridag(REAL *a,   // size [n]
-       REAL *b,   // size [n]
-       const REAL *c,   // size [n]
-       const REAL *r,   // size [n]
-       const int             n,
-       REAL *u,   // size [n]
-       REAL *uu)  // size [n] temporary
+tridag(REAL *a,
+       REAL *b,
+       const REAL *c,
+       const REAL *r,
+       const int n,
+       REAL *u,
+       REAL *uu)
 {
   int i;
 
@@ -230,11 +230,11 @@ rollback_kernel_6(PrivGlobs *globs, REAL *a, REAL *c, REAL *yy) {
 void
 rollback(const unsigned g, PrivGlobs *globs)
 {
-  unsigned
+  int
     numX = globs->numX,
     numY = globs->numY;
 
-  unsigned i, j;
+  int i, j;
 
   REAL dtInv = 1.0/(globs->myTimeline[g+1]-globs->myTimeline[g]);
 
@@ -304,9 +304,29 @@ rollback(const unsigned g, PrivGlobs *globs)
 
 
   for(j = 0; j < numY; j++) {
-    tridag(&a[j*numX], &b[j*numX], &c[j*numX],
-           &u[j*numX], numX,       &u[j*numX],
-           &yy[j*numX]);
+    yy[j*numX] = 1.0 / b[j*numX];
+    for(i = 1; i < numX; i++) {
+      yy[j*numX+i] = 1.0 / (b[j*numX+i] + yy[j*numX+i] * yy[j*numX+i-1]);
+    }
+  }
+
+  for(i = 0; i < numX; i++) {
+    for(j = 0; j < numY; j++) {
+      if(i > 0) {
+        a[j*numX+i] = 1.0 / (c[j*numX+i-1] * yy[j*numX+i-1] - b[j*numX+i] / a[j*numX+i]);
+      }
+      b[j*numX+i] = - c[j*numX+i] * yy[j*numX+i];
+      u[j*numX+i] = u[j*numX+i] * yy[j*numX+i];
+    }
+  }
+
+  for(j = 0; j < numY; j++) {
+    for(i = 1; i < numX; i++) {
+      u[j*numX+i] += a[j*numX+i] * u[j*numX+i-1];
+    }
+    for(i = numX-2; i >= 0; i--) {
+      u[j*numX+i] += b[j*numX+i] * u[j*numX+i+1];
+    }
   }
  /*
   rollback_kernel_4
@@ -340,9 +360,37 @@ rollback(const unsigned g, PrivGlobs *globs)
   checkCudaError(cudaThreadSynchronize());
 
   for(i = 0; i < numX; i++) {
-    tridag(&a[i*numY], &b[i*numY], &c[i*numY],
-           &y[i*numY], numY,       &globs->myResult[i*numY],
-           &yy[i*numY]);
+    yy[i*numY] = 1.0 / b[i*numY];
+    for(j = 1; j < numY; j++) {
+      yy[i*numY+j] = 1.0 / (b[i*numY+j] + yy[i*numY+j] * yy[i*numY+j-1]);
+    }
+  }
+
+  for(i = 0; i < numX; i++) {
+    for(j = 1; j < numY; j++) {
+      a[i*numY+j] = 1.0 / (c[i*numY+j-1] * yy[i*numY+j-1] - b[i*numY+j] / a[i*numY+j]);
+    }
+
+    // Map
+    for(j = 0; j < numY-1; j++) {
+      b[i*numY+j] = - c[i*numY+j] * yy[i*numY+j];
+    }
+
+    // Map
+    for(j = 0; j < numY; j++) {
+      globs->myResult[i*numY+j] = y[i*numY+j] * yy[i*numY+j];
+    }
+  }
+
+  for(i = 0; i < numX; i++) {
+    for(j = 1; j < numY; j++) {
+      globs->myResult[i*numY+j] += a[i*numY+j] * globs->myResult[i*numY+j-1];
+    }
+
+    // CPU-scan
+    for(j = numY - 2; j >= 0; j--) {
+      globs->myResult[i*numY+j] += b[i*numY+j] * globs->myResult[i*numY+j+1];
+    }
   }
   checkCudaError(cudaFreeHost(u));
   checkCudaError(cudaFreeHost(v));
@@ -403,5 +451,3 @@ run_OrigCPU(const unsigned int&   outer,
     checkCudaError(cudaFreeHost(clone));
   }
 }
-
-//#endif // PROJ_CORE_ORIG
