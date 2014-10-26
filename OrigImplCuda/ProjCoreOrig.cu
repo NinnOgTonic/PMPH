@@ -2,15 +2,15 @@
 #include "Constants.h"
 
 __global__ void
-updateParams_kernel(const unsigned g, const REAL alpha, const REAL beta, const REAL nu, REAL *myVarX, REAL *myVarY, REAL *myX, REAL *myY, REAL *myTimeline, int numX, int numY) {
-  const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x + 1;
+updateParams_kernel(const REAL alpha, const REAL beta, const REAL nu, REAL *myVarX, REAL *myVarY, REAL *myX, REAL *myY, int numX, int numY) {
+  const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
   const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
 
   if(gidI >= numX || gidJ >= numY)
     return;
 
-  myVarX[gidI * numY + gidJ] =  exp(2.0 * (beta * log(myX[gidI]) + myY[gidJ] - 0.5 * nu * nu * myTimeline[g]));
-  myVarY[gidI * numY + gidJ] =  exp(2.0 * (alpha * log(myX[gidI]) + myY[gidJ] - 0.5 * nu * nu * myTimeline[g]));
+  myVarX[gidI * numY + gidJ] =  exp(2.0 * (beta  * log(myX[gidI]) + myY[gidJ] + nu));
+  myVarY[gidI * numY + gidJ] =  exp(2.0 * (alpha * log(myX[gidI]) + myY[gidJ] + nu));
 
 }
 
@@ -268,149 +268,131 @@ tridag_kernel_6(REAL *results, REAL *a, REAL *b, int numX, int numY) {
 }
 
 void
-rollback(const unsigned g, PrivGlobs *globs)
+rollback(const unsigned g, PrivGlobs &globs)
 {
-  int
-    numX = globs->numX,
-    numY = globs->numY;
-
-  REAL dtInv = 1.0/(globs->myTimeline[g+1]-globs->myTimeline[g]);
-
-  REAL *u;
-  REAL *v;
-  REAL *a;
-  REAL *b;
-  REAL *c;
-  REAL *y;
-  REAL *yy;
-
-  checkCudaError(cudaMalloc(&u,  numY*numX*sizeof(REAL)));
-  checkCudaError(cudaMalloc(&v,  numY*numX*sizeof(REAL)));
-  checkCudaError(cudaMalloc(&a,  numY*numX*sizeof(REAL)));
-  checkCudaError(cudaMalloc(&b,  numY*numX*sizeof(REAL)));
-  checkCudaError(cudaMalloc(&c,  numY*numX*sizeof(REAL)));
-  checkCudaError(cudaMalloc(&y,  numY*numX*sizeof(REAL)));
-  checkCudaError(cudaMalloc(&yy, numY*numX*sizeof(REAL)));
+  REAL timeline[2];
+  memcpy(timeline, &globs.myTimeline[g], sizeof(REAL)*2);
+  REAL dtInv = 1.0/(timeline[1] - timeline[0]);
 
   rollback_kernel_1
     <<<
-    dim3(numX, DIVUP(numY, 64), 1),
+    dim3(globs.numX, DIVUP(globs.numY, 64), 1),
     dim3(1, 64, 1),
     sizeof(REAL) * (64 + 2)
     >>>
-    (v, globs->myResult, globs->myVarY, globs->myDyy, numX, numY);
+    (globs.v, globs.myResult, globs.myVarY, globs.myDyy, globs.numX, globs.numY);
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
 
   rollback_kernel_2
     <<<
-    dim3(DIVUP(numX, 64), numY, 1),
+    dim3(DIVUP(globs.numX, 64), globs.numY, 1),
     dim3(64, 1, 1),
     sizeof(REAL) * (64 + 2)
     >>>
-    (v, u, globs->myResult, globs->myVarX, globs->myDxx, dtInv, numX, numY);
+    (globs.v, globs.u, globs.myResult, globs.myVarX, globs.myDxx, dtInv, globs.numX, globs.numY);
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
 
   rollback_kernel_3
     <<<
-    dim3(numX, DIVUP(numY, 32), 1),
+    dim3(globs.numX, DIVUP(globs.numY, 32), 1),
     dim3(1, 32, 1),
     sizeof(REAL) * 3
     >>>
-    (a, b, c, globs->myVarX, globs->myDxx, dtInv, numX, numY);
+    (globs.a, globs.b, globs.c, globs.myVarX, globs.myDxx, dtInv, globs.numX, globs.numY);
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
 
   rollback_kernel_4
     <<<
-    dim3(numX-1, DIVUP(numY, 32), 1),
+    dim3(globs.numX-1, DIVUP(globs.numY, 32), 1),
     dim3(1, 32, 1)
     >>>
-    (a, c, yy, numX, numY);
+    (globs.a, globs.c, globs.yy, globs.numX, globs.numY);
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
 
   tridag_kernel_1
     <<<
-    dim3(1, DIVUP(numY, 32), 1),
+    dim3(1, DIVUP(globs.numY, 32), 1),
     dim3(1, 32, 1)
     >>>
-    (yy, b, numX, numY);
+    (globs.yy, globs.b, globs.numX, globs.numY);
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
 
   tridag_kernel_2
     <<<
-    dim3(DIVUP(numX, 32), numY, 1),
+    dim3(DIVUP(globs.numX, 32), globs.numY, 1),
     dim3(32, 1, 1)
     >>>
-    (a, b, c, u, yy, numX, numY);
+    (globs.a, globs.b, globs.c, globs.u, globs.yy, globs.numX, globs.numY);
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
 
   tridag_kernel_3
     <<<
-    dim3(1, DIVUP(numY, 32), 1),
+    dim3(1, DIVUP(globs.numY, 32), 1),
     dim3(1, 32, 1)
     >>>
-    (u, a, b, numX, numY);
+    (globs.u, globs.a, globs.b, globs.numX, globs.numY);
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
 
   rollback_kernel_5
     <<<
-    dim3(numX, DIVUP(numY, 32), 1),
+    dim3(globs.numX, DIVUP(globs.numY, 32), 1),
     dim3(1, 32, 1),
     sizeof(REAL) * 3
     >>>
-    (a, b, c, y, u, v, yy, globs->myDyy, globs->myVarY, dtInv, numX, numY);
+    (globs.a, globs.b, globs.c, globs.y, globs.u, globs.v, globs.yy, globs.myDyy, globs.myVarY, dtInv, globs.numX, globs.numY);
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
 
   rollback_kernel_6
     <<<
-    dim3(numX, DIVUP(numY, 32), 1),
+    dim3(globs.numX, DIVUP(globs.numY, 32), 1),
     dim3(1, 32, 1)
     >>>
-    (a, c, yy, numX, numY);
+    (globs.a, globs.c, globs.yy, globs.numX, globs.numY);
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
 
   tridag_kernel_4
     <<<
-    dim3(DIVUP(numX, 32), 1, 1),
+    dim3(DIVUP(globs.numX, 32), 1, 1),
     dim3(32, 1, 1)
     >>>
-    (yy, b, numX, numY);
+    (globs.yy, globs.b, globs.numX, globs.numY);
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
 
   tridag_kernel_5
     <<<
-    dim3(globs->numX, DIVUP(globs->numY, 32), 1),
+    dim3(globs.numX, DIVUP(globs.numY, 32), 1),
     dim3(1, 32, 1)
     >>>
-    (a, b, c, y, yy, globs->myResult, numX, numY);
+    (globs.a, globs.b, globs.c, globs.y, globs.yy, globs.myResult, globs.numX, globs.numY);
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
 
   tridag_kernel_6
     <<<
-    dim3(DIVUP(numX, 32), 1, 1),
+    dim3(DIVUP(globs.numX, 32), 1, 1),
     dim3(32, 1, 1)
     >>>
-    (globs->myResult, a, b, numX, numY);
+    (globs.myResult, globs.a, globs.b, globs.numX, globs.numY);
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
 
-  checkCudaError(cudaFree(u));
-  checkCudaError(cudaFree(v));
-  checkCudaError(cudaFree(a));
-  checkCudaError(cudaFree(b));
-  checkCudaError(cudaFree(c));
-  checkCudaError(cudaFree(y));
-  checkCudaError(cudaFree(yy));
+  // checkCudaError(cudaFree(u));
+  // checkCudaError(cudaFree(v));
+  // checkCudaError(cudaFree(a));
+  // checkCudaError(cudaFree(b));
+  // checkCudaError(cudaFree(c));
+  // checkCudaError(cudaFree(y));
+  // checkCudaError(cudaFree(yy));
 }
 
 REAL
@@ -425,6 +407,8 @@ value(PrivGlobs &globs,
       const unsigned int numY,
       const unsigned int numT)
 {
+  REAL res;
+
   setPayoff(strike, &globs);
 
   for(int i = numT-2; i >= 0; i--) {
@@ -433,14 +417,16 @@ value(PrivGlobs &globs,
       dim3(numX, DIVUP(numY, 32), 1),
       dim3(1, 32, 1)
       >>>
-      (i, alpha, beta, nu, globs.myVarX, globs.myVarY, globs.myX, globs.myY, globs.myTimeline, numX, numY);
+      (alpha, beta, -0.5 * nu * nu * globs.myTimeline[i], globs.myVarX, globs.myVarY, globs.myX, globs.myY, numX, numY);
     checkCudaError(cudaGetLastError());
     checkCudaError(cudaThreadSynchronize());
 
-    rollback(i, &globs);
+    rollback(i, globs);
   }
 
-  return globs.myResult[globs.myXindex*globs.numY+globs.myYindex];
+  memcpy(&res, &globs.myResult[globs.myXindex*globs.numY+globs.myYindex], sizeof(REAL));
+
+  return res;
 }
 
 void

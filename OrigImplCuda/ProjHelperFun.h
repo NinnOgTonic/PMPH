@@ -48,6 +48,8 @@ struct PrivGlobs {
   REAL *myDxx;  // [numX][4]
   REAL *myDyy;  // [numY][4]
 
+  REAL *u, *v, *a, *b, *c, *y, *yy;
+
   PrivGlobs( ) {
     printf("Invalid Contructor: need to provide the array sizes! EXITING...!\n");
     exit(0);
@@ -70,6 +72,14 @@ struct PrivGlobs {
       checkCudaError(cudaMallocHost(&this->myVarX,     numX * numY * sizeof(REAL)));
       checkCudaError(cudaMallocHost(&this->myVarY,     numX * numY * sizeof(REAL)));
       checkCudaError(cudaMallocHost(&this->myResult,   numX * numY * sizeof(REAL)));
+      checkCudaError(cudaMalloc(&this->u,              numY * numX * sizeof(REAL)));
+      checkCudaError(cudaMalloc(&this->v,              numY * numX * sizeof(REAL)));
+      checkCudaError(cudaMalloc(&this->a,              numY * numX * sizeof(REAL)));
+      checkCudaError(cudaMalloc(&this->b,              numY * numX * sizeof(REAL)));
+      checkCudaError(cudaMalloc(&this->c,              numY * numX * sizeof(REAL)));
+      checkCudaError(cudaMalloc(&this->y,              numY * numX * sizeof(REAL)));
+      checkCudaError(cudaMalloc(&this->yy,             numY * numX * sizeof(REAL)));
+
     } else {
       this->myX        = (REAL*) malloc(numX * sizeof(REAL));
       this->myDxx      = (REAL*) malloc(numX * sizeof(REAL) * 4);
