@@ -189,9 +189,9 @@ rollback_kernel_4(PrivGlobs *globs, REAL *a, REAL *c, REAL *yy) {
 
   if(gidI >= globs->numX || gidJ >= globs->numY)
     return;
-  
-  if(i > 0) {
-    yy[gidIdJ * globs->numX + gidI] = -a[gidIdJ * globs->numX + gidI] * c[gidIdJ * globs->numX + gidI-1];
+
+  if(gidI > 0) {
+    yy[gidJ * globs->numX + gidI] = -a[gidJ * globs->numX + gidI] * c[gidJ * globs->numX + gidI-1];
   }
 }
 
