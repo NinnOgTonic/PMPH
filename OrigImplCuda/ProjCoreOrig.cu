@@ -182,16 +182,17 @@ rollback_kernel_3(PrivGlobs *globs, REAL *a, REAL *b, REAL *c, REAL dtInv) {
 }
 
 __global__ void
-rollback_kernel_4(PrivGlobs *globs, REAL *a, REAL *b, REAL *c, REAL *yy, REAL dtInv) {
+rollback_kernel_4(PrivGlobs *globs, REAL *a, REAL *c, REAL *yy) {
+  // Kernel for the yy part.
   const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
   const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
 
   if(gidI >= globs->numX || gidJ >= globs->numY)
     return;
-
-  a[gidJ * globs->numX + gidI]  =       - 0.25*globs->myVarX[gidI*globs->numY+gidJ]*globs->myDxx[4*gidI + 0];
-  b[gidJ * globs->numX + gidI]  = dtInv - 0.25*globs->myVarX[gidI*globs->numY+gidJ]*globs->myDxx[4*gidI + 1];
-  c[gidJ * globs->numX + gidI]  =       - 0.25*globs->myVarX[gidI*globs->numY+gidJ]*globs->myDxx[4*gidI + 2];
+  
+  if(i > 0) {
+    yy[gidIdJ * globs->numX + gidI] = -a[gidIdJ * globs->numX + gidI] * c[gidIdJ * globs->numX + gidI-1];
+  }
 }
 
 __global__ void
@@ -267,7 +268,7 @@ rollback(const unsigned g, PrivGlobs *globs)
     (globs, a, b, c, dtInv);
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
-
+  /*
   for(i = 0; i < numX; i++) {
     for(j = 0; j < numY; j++) {
       if(i > 0) {
@@ -275,6 +276,17 @@ rollback(const unsigned g, PrivGlobs *globs)
       }
     }
   }
+  */
+
+  rollback_kernel_4
+    <<<
+    dim3(globs->numX, DIVUP(globs->numY, 32), 1),
+    dim3(1, 32, 1)
+    >>>
+    (globs, a, c, yy);
+  checkCudaError(cudaGetLastError());
+  checkCudaError(cudaThreadSynchronize());
+
 
   for(j = 0; j < numY; j++) {
     tridag(&a[j*numX], &b[j*numX], &c[j*numX],
