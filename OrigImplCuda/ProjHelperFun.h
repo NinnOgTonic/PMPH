@@ -24,6 +24,10 @@ checkCudaError(cudaError err) {
   }
 }
 
+#define DEBUG 1
+#if DEBUG
+#define cudaThreadSynchronize() cudaSuccess
+#endif
 
 struct PrivGlobs {
 
