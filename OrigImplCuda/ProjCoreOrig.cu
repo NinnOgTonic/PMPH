@@ -27,6 +27,20 @@ updateParams(const unsigned g,
     }
 }
 
+
+__global__ void
+updateParams_kernel(const unsigned g, const REAL alpha, const REAL beta, const REAL nu, REAL *myVarX, REAL *myVarY, REAL *myX, REAL *myY, REAL *myTimeline, unsigned int numY) {
+  const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x + 1;
+  const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
+
+  if(gidI >= numX || gidJ >= numY)
+    return;
+
+  myVarX[gidI * numY + gidJ] =  exp(2.0 * (beta * log(myX[gidI]) + myY[gidJ] - 0.5 * nu * nu * myTimeline[g])); 
+  myVarY[gidI * numY + gidJ] =  exp(2.0 * (alpha * log(myX[gidI]) + myY[gidJ] - 0.5 * nu * nu * myTimeline[g])); 
+
+}
+
 void
 setPayoff(const REAL strike, PrivGlobs *globs)
 {
@@ -441,7 +455,16 @@ value(PrivGlobs &globs,
   setPayoff(strike, &globs);
 
   for(int i = numT-2; i >= 0; i--) {
-    updateParams(i, alpha, beta, nu, &globs);
+    //updateParams(i, alpha, beta, nu, &globs);
+    updateParams_kernel
+    <<<
+    dim3(numX, DIVUP(numY, 32), 1),
+    dim3(1, 32, 1)
+    >>>
+    (i, alpha, beta, nu, globs.myVarX, globs.myVarY, globs.myX, globs.myY, globs.myTimeline, numY);
+    checkCudaError(cudaGetLastError());
+    checkCudaError(cudaThreadSynchronize());
+
     rollback(i, &globs);
   }
 
