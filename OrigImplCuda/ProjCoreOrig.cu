@@ -196,7 +196,7 @@ rollback_kernel_4(PrivGlobs *globs, REAL *a, REAL *c, REAL *yy) {
 }
 
 __global__ void
-rollback_kernel_5(PrivGlobs  * globs, REAL *a, REAL *b, REAL *c, REAL *y, REAL *u, REAL *v, REAL *yy, REAL dtInv) {
+rollback_kernel_5(PrivGlobs  * globs, REAL *a, REAL *b, REAL *c, REAL *u, REAL *y, REAL *v, REAL *yy, REAL dtInv) {
   const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
   const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
   const unsigned int tidJ = threadIdx.y;
@@ -295,7 +295,7 @@ tridag_kernel_5(PrivGlobs *globs, REAL *a, REAL *b, REAL *c, REAL *y, REAL *yy, 
     a[gidI*numY+gidJ] = 1.0 / (c[gidI*numY+gidJ-1] * yy[gidI*numY+gidJ-1] - b[gidI*numY+gidJ] / a[gidI*numY+gidJ]);
   }
   b[gidI*numY+gidJ] = - c[gidI*numY+gidJ] * yy[gidI*numY+gidJ];
-  u[gidI*numY+gidJ] =   u[gidI*numY+gidJ] * yy[gidI*numY+gidJ];
+  globs->myResult[gidI * numY + gidJ] = y[gidI * numY + gidJ] * yy[gidI * numY + gidJ];
 }
 
 void
