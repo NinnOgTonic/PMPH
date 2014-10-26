@@ -201,7 +201,7 @@ __global__ void
 rollback_kernel_5(PrivGlobs  * globs, REAL *a, REAL *b, REAL *c, REAL *y, REAL *u, REAL *v, REAL *yy, REAL dtInv) {
   const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
   const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
-  const unsigned int tidI = threadIdx.x;
+  const unsigned int tidJ = threadIdx.y;
 
   extern __shared__ char sh_mem1[];
   REAL *sh_mem = (REAL*) sh_mem1;
@@ -209,8 +209,8 @@ rollback_kernel_5(PrivGlobs  * globs, REAL *a, REAL *b, REAL *c, REAL *y, REAL *
   if(gidI >= globs->numX || gidJ >= globs->numY)
     return;
 
-  if (tidI < 3) {
-    sh_mem[tidI] = -0.25 * globs->myDyy[4*gidJ + tidI];
+  if (tidJ < 3) {
+    sh_mem[tidJ] = -0.25 * globs->myDyy[4*gidJ + tidJ];
   }
 
   __syncthreads();
