@@ -363,7 +363,7 @@ rollback(const REAL dtInv, PrivGlobs &globs)
   /* a[j][i] =  =       - 0.25 * myVarY[j][i] * myDyy[0][j]
      b[j][i] =  = dtInv - 0.25 * myVarY[j][i] * myDyy[1][j]
      c[j][i] =  =       - 0.25 * myVarY[j][i] * myDyy[2][j]
-     y[o][i][j] = dtInv * u[o][i][j] - v[o][i][j] */
+     y[o][j][i] = dtInv * u[o][i][j] - v[o][i][j] */
   rollback_kernel_5
     <<<
     dim3(globs.numX, DIVUP(globs.numY, 128), globs.numO),
@@ -399,7 +399,7 @@ rollback(const REAL dtInv, PrivGlobs &globs)
 
   /* a[j][i] = 1.0 / (c[j-1][i] * yy[j-1][i] - b[j][i] / a[j][i])
      b[j][i] = -c[j][i] * yy[j][i]
-     myResult[o][j][i] = y[o][i][j] * yy[j][i] */
+     myResult[o][j][i] = y[o][j][i] * yy[j][i] */
   rollback_kernel_8
     <<<
     dim3(DIVUP(globs.numX, 128), globs.numY, globs.numO),
