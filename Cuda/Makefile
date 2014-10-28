@@ -27,5 +27,8 @@ run_medium: $(EXECUTABLE)
 run_large: $(EXECUTABLE)
 	cat ../Data/Large/input.data ../Data/Large/output.data | time ./$(EXECUTABLE)
 
+run_extreme: $(EXECUTABLE)
+	cat ../Data/Extreme/input.data ../Data/Extreme/output.data | time ./$(EXECUTABLE)
+
 clean:
 	rm -f Debug.txt $(EXECUTABLE) $(OBJECTS)

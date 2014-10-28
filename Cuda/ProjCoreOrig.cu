@@ -197,7 +197,7 @@ rollback_kernel_5(REAL *a, REAL *b, REAL *c, REAL *u, REAL *v, REAL *y, REAL *my
     b[gidJ * numX + gidI] = dtInv - myVarY[gidI * numY + gidJ] * myDyy[1 * numY + gidJ];
     c[gidJ * numX + gidI] =       - myVarY[gidI * numY + gidJ] * myDyy[2 * numY + gidJ];
   }
-   y[(gidO * numY + gidJ) * numX + gidI] = dtInv * u[(gidO * numX + gidI) * numY + gidJ] - v[(gidO * numX + gidI) * numY + gidJ];
+  y[(gidO * numY + gidJ) * numX + gidI] = dtInv * u[(gidO * numX + gidI) * numY + gidJ] - v[(gidO * numX + gidI) * numY + gidJ];
 }
 
 static __global__ void
@@ -436,8 +436,8 @@ value(PrivGlobs &globs,
 
   set_payoff_kernel
     <<<
-    dim3(globs.numX, DIVUP(globs.numY, 128), globs.numO),
-    dim3(1, 128, 1)
+    dim3(DIVUP(globs.numX, 128), globs.numY, globs.numO),
+    dim3(128, 1, 1)
     >>>
     (globs.myX, globs.myResult, globs.numX, globs.numY, globs.numO);
 
@@ -474,19 +474,24 @@ run_OrigCPU(const unsigned int   outer,
             const REAL           beta,
             REAL*                res)   // [outer] RESULT
 {
+  for(int i = 0; i <= 11; i++) {
+    counters[i] = 0;
+  }
+
+  start();
   PrivGlobs globs(numX, numY, numT, outer);
+  // checkCudaError(cudaGetLastError());
+  // checkCudaError(cudaThreadSynchronize());
+  end(&counters[11]); start();
+
   initGrid(s0, alpha, nu, t, numX, numY, numT, outer, globs);
   initOperator(globs.myX, numX, globs.myDxx, outer);
   initOperator(globs.myY, numY, globs.myDyy, outer);
 
-  for(int i = 0; i <= 10; i++) {
-    counters[i] = 0;
-  }
-
   value(globs, s0,   t,
         alpha, nu,   beta,
         res);
-  for(int i = 0; i <= 10; i++) {
+  for(int i = 0; i <= 11; i++) {
     printf("%lld %d\n", counters[i], i);
   }
 }
