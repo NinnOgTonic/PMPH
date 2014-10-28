@@ -1,0 +1,158 @@
+
+
+
+Total time was 4.1 seconds
+
+Timings of kernels:
+
+0 10
+2970 6
+4999 1
+51518 3
+53029 7
+53676 2
+91364 8
+224280 0
+328518 5
+1065684 9
+1068655 4
+
+Transposed U everywhere to improve kernel 4 (and others)
+
+2783 6
+4917 1
+53928 7
+54513 2
+92118 8
+221288 5
+261095 3
+281197 0
+342746 4
+1076134 9
+
+Total time is now 3.58
+
+Kernel 0 got slower, because u access is now not coalesced. Fixed by transposing u to shared memory, and reading coalesced from there.
+
+kernel 0 time now 267543
+
+transposed yy for all kernels up to 6, improved kernels 1, 2. made 3 slower, fixing.
+
+transposed a,b,c for all kernels up to 5. improved kernels 2, 4. made 3 even slower, fixing
+
+reversed tiling of kernel 3 to get coalesced access, improved vastly from 396723 to 91865
+
+transposed yy for remaining kernels to improve kernel 7. from 54000 to 28000.
+
+transposing myresult everywhere for kernel 9: speedup a lot. 9 from 1081933 to 344733.
+Total time is now 2.65
+
+2743 1
+3301 6
+17895 2
+28403 7
+91683 3
+130755 4
+222101 5
+229612 0
+238208 8
+341995 9
+
+transposing a,b,c in remaining kernels, to fix kernel 6 and 9. total time is now 2.23
+
+3012 1
+5226 6
+18120 2
+19159 7
+92847 3
+132079 4
+132252 9
+198361 5
+232995 0
+245824 8
+
+Tiled 6 better to half its execution time.
+
+Improved 8 significantly.
+
+Improved kernel 0 significantly by loading into shared memory mydxx, mydyy and entire myresult.. kernel 0 now takes 148587.
+
+
+2588 1
+2597 6
+17758 7
+17952 2
+91673 3
+130778 4
+130819 9
+140518 5
+147804 0
+164194 8
+
+fixed block sizes from 32 to 64. much wow. Total time was halved.
+
+3510 1
+7205 6
+19832 7
+23755 2
+53589 3
+87646 5
+96620 9
+99199 4
+155804 0
+157527 8
+
+And to 128:
+
+2364 6
+2422 1
+18246 7
+18376 2
+37395 3
+70412 5
+85548 4
+85591 9
+152275 0
+152819 8
+
+
+
+
+
+Table of performance of kernels when invoked with various block sizes:
+(Note: Kernel 0 is always 32x32 = 1024. Can't be changed.)
+
+
+Block size:        32        64       128       256       512
+
+Kernel   0:    149963
+Kernel   1:      2927      2517      2516      2497      2455
+Kernel   2:     18333     18504     18582     18622     18644
+Kernel   3:     93541     53443     36580     37026     37070
+Kernel   4:    132734     96662     85957     91119     92739
+Kernel   5:    143290     86995     70856     71047     71148
+Kernel   6:      2951      2478      2408      2412      2351
+Kernel   7:     18178     18291     18385     18446     18471
+Kernel   8:    166507    154633    153778    154123    154369
+Kernel   9:    132842     98206     87702     91106     91275
+Kernel  10:      7143      6474      6470      6523      6537
+
+Total time:   2031194   1860382   1793703   1808618   1818025
+
+
+Looking at the table, we found that all kernels (besides 0) performed best block size 128.
+
+
+
+
+
+
+Note: Calculate a/b/c separately in kernel 5 for speedup
+
+
+
+
+
+
+
+
