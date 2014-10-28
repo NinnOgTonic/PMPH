@@ -24,7 +24,7 @@ checkCudaError(cudaError err) {
   }
 }
 
-#define DEBUG 1
+#define DEBUG 0
 #if DEBUG
 #define cudaThreadSynchronize() cudaSuccess
 #endif
@@ -129,9 +129,6 @@ tridag(const REAL *a,   // size [n]
        const int  n,
        REAL       *u,   // size [n]
        REAL       *uu); // size [n] temporary
-
-void
-rollback(const unsigned g, PrivGlobs& globs);
 
 REAL
 value(PrivGlobs  &globs,

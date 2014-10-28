@@ -405,6 +405,9 @@ rollback(const REAL dtInv, PrivGlobs &globs)
   checkCudaError(cudaThreadSynchronize());
   end(&counters[9]);
 
+  //checkCudaError(cudaThreadSynchronize());
+  //end(&counters[0]);
+
 }
 
 static void
@@ -431,8 +434,8 @@ value(PrivGlobs &globs,
       dim3(1, 32, 1)
       >>>
       (alpha, beta, -0.5 * nu * nu * globs.myTimeline[i], globs.myVarX, globs.myVarY, globs.myX, globs.myY, globs.numX, globs.numY);
-    checkCudaError(cudaGetLastError());
-    checkCudaError(cudaThreadSynchronize());
+    //checkCudaError(cudaGetLastError());
+    //checkCudaError(cudaThreadSynchronize());
     rollback(1.0 / (globs.myTimeline[i+1] - globs.myTimeline[i]), globs);
   }
 
