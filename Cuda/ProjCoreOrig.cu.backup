@@ -185,19 +185,39 @@ rollback_kernel_4(REAL *u, REAL *a, REAL *b, int numX, int numY) {
 
 static __global__ void
 rollback_kernel_5(REAL *a, REAL *b, REAL *c, REAL *u, REAL *v, REAL *y, REAL *myDyy, REAL *myVarY, REAL dtInv, int numX, int numY) {
-  const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
-  const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
   const unsigned int gidO = blockIdx.z*blockDim.z + threadIdx.z;
+  const unsigned int bidI = blockIdx.x*blockDim.x;
+  const unsigned int bidJ = blockIdx.y*blockDim.y;
+  const unsigned int lidI = threadIdx.x;
+  const unsigned int lidJ = threadIdx.y;
+  const unsigned int gidI = bidI + lidI;
+  const unsigned int gidJ = bidJ + lidJ;
+
+  extern __shared__ char sh_mem1[];
+  REAL *sh_mem    = (REAL*) sh_mem1;
+  REAL *localVarY = sh_mem + 32*32;
+  REAL *localDyy  = localVarY + 32*32;
+
+  if(bidI + lidJ < numX && bidJ + lidI < numY) {
+    sh_mem[32*lidI + lidJ]    = dtInv * u[(gidO * numX + bidI + lidJ) * numY + bidJ + lidI] - v[(gidO * numX + bidI + lidJ) * numY + bidJ + lidI];
+    localVarY[32*lidI + lidJ] = myVarY[(bidI + lidJ) * numY + bidJ + lidI];
+  }
+
+  if(lidJ < 3) {
+    localDyy[lidJ * 32 + lidI] = myDyy[lidJ * numY + bidJ + lidI];
+  }
+
+  __syncthreads();
 
   if(gidJ >= numY)
     return;
 
   if(gidO == 0) {
-    a[gidJ * numX + gidI] =       - myVarY[gidI * numY + gidJ] * myDyy[0 * numY + gidJ];
-    b[gidJ * numX + gidI] = dtInv - myVarY[gidI * numY + gidJ] * myDyy[1 * numY + gidJ];
-    c[gidJ * numX + gidI] =       - myVarY[gidI * numY + gidJ] * myDyy[2 * numY + gidJ];
+    a[gidJ * numX + gidI] =       - localVarY[32*lidJ + lidI] * localDyy[0 * 32 + lidJ];
+    b[gidJ * numX + gidI] = dtInv - localVarY[32*lidJ + lidI] * localDyy[1 * 32 + lidJ];
+    c[gidJ * numX + gidI] =       - localVarY[32*lidJ + lidI] * localDyy[2 * 32 + lidJ];
   }
-   y[(gidO * numY + gidJ) * numX + gidI] = dtInv * u[(gidO * numX + gidI) * numY + gidJ] - v[(gidO * numX + gidI) * numY + gidJ];
+  y[(gidO * numY + gidJ) * numX + gidI] = sh_mem[32*lidJ + lidI];
 }
 
 static __global__ void
@@ -366,8 +386,9 @@ rollback(const REAL dtInv, PrivGlobs &globs)
      y[o][i][j] = dtInv * u[o][i][j] - v[o][i][j] */
   rollback_kernel_5
     <<<
-    dim3(globs.numX, DIVUP(globs.numY, 128), globs.numO),
-    dim3(1, 128, 1)
+    dim3(DIVUP(globs.numX, 32), DIVUP(globs.numY, 32), globs.numO),
+    dim3(32, 32, 1),
+    (32 * 32 + 32 * 32 + 32*3) * sizeof(REAL)
     >>>
     (globs.a, globs.b, globs.c, globs.u, globs.v, globs.y, globs.myDyy, globs.myVarY, dtInv, globs.numX, globs.numY);
   checkCudaError(cudaGetLastError());
