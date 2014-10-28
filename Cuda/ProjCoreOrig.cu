@@ -96,7 +96,7 @@ rollback_kernel_0(REAL *a, REAL *b, REAL *c, REAL *u, REAL *v, REAL *myResult, R
     return;
   }
 
-  v[(gidO * numX + gidI) * numY + gidJ] = 2.0 * myVarY[gidI * numY + gidJ] *
+  v[(gidO * numX + gidI) * numY + gidJ] = myVarY[gidI * numY + gidJ] *
     (localDyy[0 * 32 + lidJ] * sh_mem[34*(lidI + 1) + lidJ] +
      localDyy[1 * 32 + lidJ] * sh_mem[34*(lidI + 1) + lidJ + 1] +
      localDyy[2 * 32 + lidJ] * sh_mem[34*(lidI + 1) + lidJ + 2]);
@@ -105,7 +105,7 @@ rollback_kernel_0(REAL *a, REAL *b, REAL *c, REAL *u, REAL *v, REAL *myResult, R
     (localDxx[0 * 32 + lidI] * sh_mem[34*lidI + lidJ + 1] +
      localDxx[1 * 32 + lidI] * sh_mem[34*(lidI + 1) + lidJ + 1] +
      localDxx[2 * 32 + lidI] * sh_mem[34*(lidI + 2) + lidJ + 1]) +
-    v[(gidO * numX + gidI) * numY + gidJ] +
+    2.0 * v[(gidO * numX + gidI) * numY + gidJ] +
     dtInv * sh_mem[34*(lidI + 1) + lidJ + 1];
 
   if(gidO == 0) {
@@ -197,7 +197,7 @@ rollback_kernel_5(REAL *a, REAL *b, REAL *c, REAL *y, REAL *u, REAL *v, REAL *my
     b[gidJ * numX + gidI] = dtInv - myVarY[gidI * numY + gidJ] * myDyy[1 * numY + gidJ];
     c[gidJ * numX + gidI] =       - myVarY[gidI * numY + gidJ] * myDyy[2 * numY + gidJ];
   }
-  y[(gidO * numX + gidI) * numY + gidJ] = dtInv * u[(gidO * numX + gidI) * numY + gidJ] - 0.5 * v[(gidO * numX + gidI) * numY + gidJ];
+  y[(gidO * numX + gidI) * numY + gidJ] = dtInv * u[(gidO * numX + gidI) * numY + gidJ] - v[(gidO * numX + gidI) * numY + gidJ];
 
 }
 
@@ -296,8 +296,8 @@ static void
 rollback(const REAL dtInv, PrivGlobs &globs)
 {
 
-  /* v[o][i][j] = myDyy[0..2][j] `dot` myResult[o][j-1..j+1][i] * myVarY[i][j] * 2.0
-     u[o][i][j] = myDxx[0..2][i] `dot` myResult[o][j][i-1..i+1] * myVarX[i][j] + v[o][i][j] + dtInv * myResult[o][j][i]
+  /* v[o][i][j] = myDyy[0..2][j] `dot` myResult[o][j-1..j+1][i] * myVarY[i][j]
+     u[o][i][j] = myDxx[0..2][i] `dot` myResult[o][j][i-1..i+1] * myVarX[i][j] + 2.0 * v[o][i][j] + dtInv * myResult[o][j][i]
      a[i][j]    =       - myVarX[i][j] * myDxx[0][i]
      b[i][j]    = dtInv - myVarX[i][j] * myDxx[1][i]
      c[i][j]    =       - myVarX[i][j] * myDxx[2][i]
@@ -364,7 +364,7 @@ rollback(const REAL dtInv, PrivGlobs &globs)
   /* a[j][i] =  =       - 0.25 * myVarY[j][i] * myDyy[0][j]
      b[j][i] =  = dtInv - 0.25 * myVarY[j][i] * myDyy[1][j]
      c[j][i] =  =       - 0.25 * myVarY[j][i] * myDyy[2][j]
-     y[o][i][j] = dtInv * u[o][i][j] - 0.5 * v[o][i][j] */
+     y[o][i][j] = dtInv * u[o][i][j] - v[o][i][j] */
   rollback_kernel_5
     <<<
     dim3(globs.numX, DIVUP(globs.numY, 128), globs.numO),
