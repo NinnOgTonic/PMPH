@@ -14,7 +14,7 @@ updateParams_kernel(const REAL alpha, const REAL beta, const REAL nu, REAL *myVa
     return;
 
   myVarX[gidJ * numX + gidI] = 0.25 * exp(2.0 * (beta  * log(myX[gidI]) + myY[gidJ] + nu));
-  myVarY[gidJ * numX + gidI] =        exp(2.0 * (alpha * log(myX[gidI]) + myY[gidJ] + nu));
+  myVarY[gidJ * numX + gidI] = 0.25 * exp(2.0 * (alpha * log(myX[gidI]) + myY[gidJ] + nu));
 
 }
 
@@ -74,7 +74,7 @@ rollback_kernel_0(REAL *a, REAL *b, REAL *c, REAL *u, REAL *v, REAL *myResult, R
     tmp += myDyy[2 * numY + gidJ] * myResult[(gidO * numX + gidI) * numY + gidJ + 1];
   }
 
-  v[(gidO * numY + gidJ) * numX + gidI] = 0.5 * myVarY[gidJ * numX + gidI] * tmp;
+  v[(gidO * numY + gidJ) * numX + gidI] = 2.0 * myVarY[gidJ * numX + gidI] * tmp;
 
   tmp = 0.0;
   if (lidI > 0) {
@@ -89,7 +89,7 @@ rollback_kernel_0(REAL *a, REAL *b, REAL *c, REAL *u, REAL *v, REAL *myResult, R
     tmp += myDxx[2 * numX + gidI] * myResult[(gidO * numX + gidI + 1) * numY + gidJ];
   }
 
-  u[(gidO * numY + gidJ) * numX + gidI] = myVarX[gidJ * numX + gidI] * tmp +
+  u[(gidO * numX + gidI) * numY + gidJ] = myVarX[gidJ * numX + gidI] * tmp +
     v[(gidO * numY + gidJ) * numX + gidI] +
     dtInv * sh_mem[32*lidJ + lidI];
 
@@ -148,7 +148,7 @@ rollback_kernel_3(REAL *a, REAL *b, REAL *c, REAL *u, REAL *yy, int numX, int nu
     b[gidJ * numX + gidI] = - c[gidJ * numX + gidI] * yy[gidJ * numX + gidI];
   }
 
-  u[(gidO * numY + gidJ) * numX + gidI] = u[(gidO * numY + gidJ) * numX + gidI] * yy[gidJ * numX + gidI];
+  u[(gidO * numX + gidI) * numY + gidJ] = u[(gidO * numX + gidI) * numY + gidJ] * yy[gidJ * numX + gidI];
 }
 
 static __global__ void
@@ -161,10 +161,10 @@ rollback_kernel_4(REAL *u, REAL *a, REAL *b, int numX, int numY) {
     return;
 
   for(i = 1; i < numX; i++) {
-    u[(gidO * numY + gidJ) * numX + i] += a[gidJ * numX + i] * u[(gidO * numY + gidJ) * numX + i - 1];
+    u[(gidO * numX + i) * numY + gidJ] += a[gidJ * numX + i] * u[(gidO * numX + i - 1) * numY + gidJ];
   }
   for(i = numX-2; i >= 0; i--) {
-    u[(gidO * numY + gidJ) * numX + i] += b[gidJ * numX + i] * u[(gidO * numY + gidJ) * numX + i + 1];
+    u[(gidO * numX + i) * numY + gidJ] += b[gidJ * numX + i] * u[(gidO * numX + i + 1) * numY + gidJ];
   }
 }
 
@@ -178,11 +178,11 @@ rollback_kernel_5(REAL *a, REAL *b, REAL *c, REAL *y, REAL *u, REAL *v, REAL *my
     return;
 
   if(gidO == 0) {
-    a[gidI * numY + gidJ] =       - 0.25 * myVarY[gidJ * numX + gidI] * myDyy[0 * numY + gidJ];
-    b[gidI * numY + gidJ] = dtInv - 0.25 * myVarY[gidJ * numX + gidI] * myDyy[1 * numY + gidJ];
-    c[gidI * numY + gidJ] =       - 0.25 * myVarY[gidJ * numX + gidI] * myDyy[2 * numY + gidJ];
+    a[gidI * numY + gidJ] =       - myVarY[gidJ * numX + gidI] * myDyy[0 * numY + gidJ];
+    b[gidI * numY + gidJ] = dtInv - myVarY[gidJ * numX + gidI] * myDyy[1 * numY + gidJ];
+    c[gidI * numY + gidJ] =       - myVarY[gidJ * numX + gidI] * myDyy[2 * numY + gidJ];
   }
-  y[(gidO * numX + gidI) * numY + gidJ] = dtInv * u[(gidO * numY + gidJ) * numX + gidI] - 0.5 * v[(gidO * numY + gidJ) * numX + gidI];
+  y[(gidO * numX + gidI) * numY + gidJ] = dtInv * u[(gidO * numX + gidI) * numY + gidJ] - 0.5 * v[(gidO * numY + gidJ) * numX + gidI];
 
 }
 
@@ -250,7 +250,7 @@ rollback_kernel_9(REAL *myResult, REAL *a, REAL *b, int numX, int numY) {
     myResult[(gidO * numX + gidI) * numY + j] += a[gidI * numY + j] * myResult[(gidO * numX + gidI) * numY + j - 1];
   }
   for(j = numY-2; j >= 0; j--) {
-    myResult[(gidO * numX + gidI) * numY + j] = myResult[(gidO * numX + gidI) * numY + j] + b[gidI * numY + j] * myResult[(gidO * numX + gidI) * numY + j + 1];
+    myResult[(gidO * numX + gidI) * numY + j] += b[gidI * numY + j] * myResult[(gidO * numX + gidI) * numY + j + 1];
   }
 }
 
@@ -278,8 +278,8 @@ rollback(const REAL dtInv, PrivGlobs &globs)
 {
   start();
 
-  /* v[o][j][i] = myDyy[0..2][j] `dot` myResult[o][i][j-1..j+1] * myVarY[j][i] * 0.5
-     u[o][j][i] = myDxx[0..2][i] `dot` myResult[o][i-1..i+1][j] * myVarX[j][i] + v[o][j][i] + dtInv * myResult[o][i][j]
+  /* v[o][j][i] = myDyy[0..2][j] `dot` myResult[o][i][j-1..j+1] * myVarY[j][i] * 2.0
+     u[o][i][j] = myDxx[0..2][i] `dot` myResult[o][i-1..i+1][j] * myVarX[j][i] + v[o][j][i] + dtInv * myResult[o][i][j]
      a[j][i]    =       - myVarX[j][i] * myDxx[0][i]
      b[j][i]    = dtInv - myVarX[j][i] * myDxx[1][i]
      c[j][i]    =       - myVarX[j][i] * myDxx[2][i]
@@ -320,7 +320,7 @@ rollback(const REAL dtInv, PrivGlobs &globs)
 
   /* a[j][i]    = 1.0 / (c[j][i-1] * yy[j][i-1] - b[j][i] / a[j][i])
      b[j][i]    = -  c[j][i] * yy[j][i]
-     u[o][j][i] = u[o][j][i] * yy[j][i] */
+     u[o][i][j] = u[o][i][j] * yy[j][i] */
   rollback_kernel_3
     <<<
     dim3(DIVUP(globs.numX, 64), globs.numY, globs.numO),
@@ -331,8 +331,8 @@ rollback(const REAL dtInv, PrivGlobs &globs)
   checkCudaError(cudaThreadSynchronize());
   end(&counters[3]); start();
 
-  /* u[o][j][i] += a[j][i] * u[o][j][i-1]
-     u[o][j][i] += b[j][i] * u[o][j][i+1] */
+  /* u[o][i][j] += a[j][i] * u[o][i-1][j]
+     u[o][i][j] += b[j][i] * u[o][i+1][j] */
   rollback_kernel_4
     <<<
     dim3(1, DIVUP(globs.numY, 32), globs.numO),
@@ -345,8 +345,8 @@ rollback(const REAL dtInv, PrivGlobs &globs)
 
   /* a[i][j] =  =       - 0.25 * myVarY[j][i] * myDyy[0][j]
      b[i][j] =  = dtInv - 0.25 * myVarY[j][i] * myDyy[1][j]
-     c[i][j] =  =       - 0.25 * myVarY[j][i] * myDyy[0][j]
-     y[o][i][j] = dtInv * u[o][j][i] - 0.5 * v[o][j][i] */
+     c[i][j] =  =       - 0.25 * myVarY[j][i] * myDyy[2][j]
+     y[o][i][j] = dtInv * u[o][i][j] - 0.5 * v[o][j][i] */
   rollback_kernel_5
     <<<
     dim3(globs.numX, DIVUP(globs.numY, 32), globs.numO),
@@ -461,14 +461,14 @@ run_OrigCPU(const unsigned int   outer,
   initOperator(globs.myX, numX, globs.myDxx, outer);
   initOperator(globs.myY, numY, globs.myDyy, outer);
 
-  for(int i = 0; i <= 10; i++) {
+  for(int i = 0; i <= 9; i++) {
     counters[i] = 0;
   }
 
   value(globs, s0,   t,
         alpha, nu,   beta,
         res);
-  for(int i = 0; i <= 10; i++) {
+  for(int i = 0; i <= 9; i++) {
     printf("%lld %d\n", counters[i], i);
   }
 }
