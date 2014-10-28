@@ -1,0 +1,189 @@
+%Template by Morten Espensen
+%Deffinere kommandoer til om vores information
+
+\documentclass[]{report}
+%\usepackage{color}
+%\usepackage{alltt}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage[parfill]{parskip}
+\usepackage{lscape}
+\usepackage{enumerate}
+
+\usepackage[danish,english]{babel} 
+ 
+\usepackage[paper=A4,pagesize]{typearea}
+\usepackage[toc,page]{appendix}
+
+\usepackage[utf8]{inputenc}
+\usepackage{fancyhdr}
+%\usepackage{boxproof}
+%\usepackage{daymonthyear}
+\usepackage{stmaryrd}
+
+\usepackage{color}
+\usepackage{fancyvrb}
+\usepackage[usenames,dvipsnames]{xcolor}
+\fvset{frame=single,framesep=1mm,fontfamily=courier,fontsize=\scriptsize,numbers=left,framerule=.3mm,numbersep=1mm,commandchars=\\\{\}}
+
+\usepackage{wallpaper} % For the frontpage background
+
+\usepackage{listings} % KODE SHIT
+\lstset{ %
+language=PHP,          		    % the language of the code
+basicstyle=\footnotesize,       % the size of the fonts that are used for the code
+numbers=left,                   % where to put the line-numbers
+numberstyle=\footnotesize,      % the size of the fonts that are used for the line-numbers
+stepnumber=1,                   % the step between two line-numbers. If it's 1, each line
+                                % will be numbered
+numbersep=5pt,                  % how far the line-numbers are from the code
+backgroundcolor=\color{white},  % choose the background color. You must add \usepackage{color}
+showspaces=false,               % show spaces adding particular underscores
+showstringspaces=false,         % underline spaces within strings
+showtabs=false,                 % show tabs within strings adding particular underscores
+frame=single,                   % adds a frame around the code
+tabsize=2,                      % sets default tabsize to 2 spaces
+captionpos=b,                   % sets the caption-position to bottom
+breaklines=true,                % sets automatic line breaking
+breakatwhitespace=false,        % sets if automatic breaks should only happen at whitespace
+title=\lstname,                 % show the filename of files included with \lstinputlisting;
+                                % also try caption instead of title
+escapeinside={\%*}{*)},         % if you want to add a comment within your code
+morekeywords={*,...,xchar,xstring,xmany1,chainl1,chainl1',ReadP}            % if you want to add more keywords to the set
+}
+
+\newcommand{\theassingment}{Programming Massively Parallel Hardware}
+\newcommand{\thesubassignment}{Optimising Tridag}
+\newcommand{\shorttheassingment}{PMPH Group Project}
+\newcommand{\thepaperauthor}{Morten Espensen \& Niklas Høj \& Mathias Svennson}
+\newcommand{\personalid}{dzr440 - 19/06/1991 \& nwv762 - 24/07/1991 \& tpx783 - din/mor/XX}
+\newcommand{\thesubject}{Group Project}
+\newcommand{\theinstitute}{Department of Computer Science}
+\newcommand{\thesupervisor}{Cosmin E. Oancea} %behøves kun hvis findes
+
+\newenvironment{timesfont}{\fontfamily{mathptmx}\selectfont}{}
+
+\newcommand{\n}[0]{\\[2ex]} %NEWLINE [2ex]
+\newcommand{\set}[1]{\{#1\}}
+\usepackage{hyperref}
+
+\newcommand{\fnurl}[2]{\href{#2}{#1}\footnote{\url{#2}}}  %foodnote url ref \fnurl{String}{Link}
+
+\newcommand{\premise}{\=\mbox{premise}}
+\newcommand{\assumption}{\=\mbox{assumption}}
+\newcommand{\landi}{\=\intro\land : }
+\newcommand{\lande}{\=\elim\land_{1} : }
+\newcommand{\landee}{\=\elim\land_{2} : }
+\newcommand{\lori}{\=\intro\lor_{1} : }
+\newcommand{\lorii}{\=\intro\lor_{2} : }
+\newcommand{\lore}{\=\elim\lor : }
+\newcommand{\toi}{\=\intro\to : }
+\newcommand{\toe}{\=\elim\to : }
+\newcommand{\lnoti}{\=\intro\lnot : }
+\newcommand{\lnote}{\=\elim\lnot : }
+\newcommand{\bote}{\=\elim\bot : }
+\newcommand{\lnege}{\=\lnot\elim\lnot : }
+\newcommand{\lnegi}{\=\lnot\intro\lnot : }
+\newcommand{\leqi}{\= \intro= }
+\newcommand{\leqe}{\= \elim= : }
+\newcommand{\lforalli}{\= \intro\forall : }
+\newcommand{\lforalle}{\= \elim\forall : }
+\newcommand{\lexistsi}{\= \intro\exists : }
+\newcommand{\lexistse}{\= \elim\exists : }
+\newcommand{\MT}{\=MT : }
+\newcommand{\PBC}{\=PBC : }
+\newcommand{\LEM}{\=LEM : }
+
+\newenvironment{changemargin}[1]{
+  \begin{list}{}{
+    \setlength{\voffset}{#1}
+  }
+  \item[]}{\end{list}}
+
+
+\usepackage{hyperref}
+\usepackage{pdfpages} % til at tilføje apendix
+\usepackage{graphicx}
+\DeclareGraphicsExtensions{.pdf,.png,.jpg}
+
+\def\thesection{\thechapter.\arabic{section}}
+%\renewcommand{\thesubsection} {\thesection.\alph{subsection}}
+
+\pagestyle{fancy}
+\fancyhead{}
+\fancyhead[LO,LE]{\shorttheassingment}
+\fancyhead[RO,RE]{\today}
+\fancyhead[CO,CE]{\theinstitute}
+
+\begin{document}
+\begin{titlepage}
+\begin{timesfont}
+% Import the ku frontpage graphics
+\ThisULCornerWallPaper{1}{nat-farve.pdf}
+% Import faculty title
+\ThisULCornerWallPaper{1}{nat-en.pdf}
+% For forklaring af vspace og stretch, se side 115 i ".. not so short .."
+% www.ctan.org/tex-archive/info/lshort/english/lshort.pdf
+\vspace*{3cm}
+\hspace*{-2.3cm}
+% Her vælger en kæmpe skrifttype og fed skrift
+\Huge\bfseries
+\vspace*{-0.5cm}
+\theassingment\n
+\hspace*{-2.4cm}
+-- \thesubassignment \n
+\LARGE
+\hspace*{-2.4cm}
+\vspace*{-0.5cm}
+\thesubject \\[2.2ex]
+\hspace*{-2.4cm}
+\vspace*{4.3cm}
+\theinstitute \n
+\hspace*{-2.38cm}
+\large
+\textbf{Written by:}\\[1ex]
+\hspace*{-2.33cm}
+\thepaperauthor \\
+\hspace*{-2.33cm}
+\personalid \\
+\hspace*{-2.33cm}
+% Nulstiller skriftstørrelse og type (f.eks. fed)
+\today
+\normalsize
+% VEJLEDER INFORMATION I PÅ FORSIDEN?
+%\thesubject \n
+
+\vspace*{3.2cm}
+\hspace*{-2.33cm}
+\textbf{\emph{Supervised by:}}
+
+\hspace*{-2.33cm}
+\thesupervisor
+
+\end{timesfont}
+\end{titlepage}
+\tableofcontents
+\newpage
+\chapter{Transformations}
+\input{transformations.tex}
+
+
+\end{document}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
