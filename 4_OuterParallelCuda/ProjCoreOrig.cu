@@ -471,6 +471,7 @@ value(PrivGlobs &globs,
       (alpha, beta, -0.5 * nu * nu * globs.myTimeline[i], globs.myVarX, globs.myVarY, globs.myX, globs.myY, globs.numX, globs.numY);
     checkCudaError(cudaGetLastError());
     checkCudaError(cudaThreadSynchronize());
+
     rollback(1.0 / (globs.myTimeline[i+1] - globs.myTimeline[i]), globs);
   }
 
