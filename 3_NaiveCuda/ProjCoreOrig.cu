@@ -177,10 +177,10 @@ tridag_kernel_3(REAL *u, REAL *a, REAL *b, int numX, int numY) {
     return;
 
   for(i = 1; i < numX; i++) {
-    last = u[gidJ*numX+i] = u[gidJ*numX+i] + a[gidJ*numX+i] * u[gidJ*numX+i-1];
+    u[gidJ*numX+i] = u[gidJ*numX+i] + a[gidJ*numX+i] * u[gidJ*numX+i-1];
   }
   for(i = numX-2; i >= 0; i--) {
-    last = u[gidJ*numX+i] = u[gidJ*numX+i] + b[gidJ*numX+i] * u[gidJ*numX+i+1];
+    u[gidJ*numX+i] = u[gidJ*numX+i] + b[gidJ*numX+i] * u[gidJ*numX+i+1];
   }
 }
 
@@ -233,7 +233,7 @@ tridag_kernel_4(REAL *yy, REAL *b, int numX, int numY) {
   yy[gidI*numY] = 1.0 / b[gidI*numY];
 
   for(j = 1; j < numY; j++) {
-    last = yy[gidI*numY+j] = 1.0 / (b[gidI*numY+j] + yy[gidI*numY+j] * yy[gidI*numY+j-1]);
+    yy[gidI*numY+j] = 1.0 / (b[gidI*numY+j] + yy[gidI*numY+j] * yy[gidI*numY+j-1]);
   }
 }
 
@@ -261,10 +261,10 @@ tridag_kernel_6(REAL *results, REAL *a, REAL *b, int numX, int numY) {
     return;
 
   for(j = 1; j < numY; j++) {
-    last = results[gidI*numY+j] = results[gidI*numY+j] + a[gidI*numY+j] * results[gidI*numY+j-1];
+    results[gidI*numY+j] = results[gidI*numY+j] + a[gidI*numY+j] * results[gidI*numY+j-1];
   }
   for(j = numY-2; j >= 0; j--) {
-    last = results[gidI*numY+j] = results[gidI*numY+j] + b[gidI*numY+j] * results[gidI*numY+j+1];
+    results[gidI*numY+j] = results[gidI*numY+j] + b[gidI*numY+j] * results[gidI*numY+j+1];
   }
 }
 
@@ -358,10 +358,6 @@ rollback(const REAL dtInv, PrivGlobs &globs)
     (globs.u, globs.a, globs.b, globs.numX, globs.numY);
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
-
-  gettimeofday(&t_end, NULL);
-  timeval_subtract1(&t_diff, &t_end, &t_start);
-  total_count1 += t_diff.tv_sec*1e6+t_diff.tv_usec;
 
   rollback_kernel_5
     <<<
