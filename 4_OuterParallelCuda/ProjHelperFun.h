@@ -1,7 +1,6 @@
 #ifndef PROJ_HELPER_FUNS
 #define PROJ_HELPER_FUNS
 
-#include <new>
 #include <cuda_runtime.h>
 #include <cmath>
 #include <stdio.h>
@@ -107,23 +106,7 @@ initGrid(const REAL s0, const REAL alpha, const REAL nu,const REAL t,
          const unsigned int numO, PrivGlobs &globs);
 
 void
-initOperator(const REAL *x, const unsigned int n, REAL *Dxx, unsigned int numO);
-
-void
-updateParams(const unsigned int g, const REAL alpha, const REAL beta, const REAL nu, PrivGlobs &globs);
-
-void
-setPayoff(const REAL strike, PrivGlobs &globs);
-
-void
-tridag(const REAL *a,   // size [n]
-       const REAL *b,   // size [n]
-       const REAL *c,   // size [n]
-       const REAL *r,   // size [n]
-       const int  n,
-       REAL       *u,   // size [n]
-       REAL       *uu); // size [n] temporary
-
+initOperator(const REAL *x, const unsigned int n, REAL *Dxx);
 void
 rollback(const unsigned g, PrivGlobs& globs);
 
