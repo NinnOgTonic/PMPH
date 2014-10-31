@@ -215,6 +215,9 @@ Every other loop is completely parallelizable.
 Yes.
 \chapter{Results}
 The configuration for these timings were optimised for speed. Cuda host thread synchronisation was turned off where not necessary, and the REAL data type was compiled to use floats instead of doubles for additional speed-up. All instances were executed on gpu04.
+
+\begin{figure}[H]
+    \centering
 \begin{tabular}{|r|r|r|r|}
   \hline
   Data set size / Implementation & Small & Medium & Large\\
@@ -232,6 +235,9 @@ The configuration for these timings were optimised for speed. Cuda host thread s
  Optimised CUDA & $311941 \mu s$ & $321146 \mu s$ & $791390 \mu s$\\
   \hline
 \end{tabular}
+\caption{Table of performance for each version of the transformations we made}
+\end{figure}
+
 
 
 \end{document}
