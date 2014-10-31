@@ -21,32 +21,32 @@ initGrid(const REAL s0,
          const unsigned numX,
          const unsigned numY,
          const unsigned numT,
-         PrivGlobs *globs)
+         PrivGlobs &globs)
 {
   REAL *tmp = (REAL*) malloc(sizeof(REAL) * MAX(numX, numY));
 
   for(unsigned i = 0; i < numT; i++) {
-    globs->myTimeline[i] = t*i/(numT-1);
+    globs.myTimeline[i] = t*i/(numT-1);
   }
 
   const REAL stdX = 20.0*alpha*s0*sqrt(t);
   const REAL dx = stdX/numX;
-  globs->myXindex = static_cast<unsigned>(s0/dx) % numX;
+  globs.myXindex = static_cast<unsigned>(s0/dx) % numX;
 
 
   for(unsigned i = 0; i < numX; i++) {
     tmp[i] = i*dx - globs->myXindex*dx + s0;
   }
-  cudaMemcpy(globs->myX, tmp, sizeof(REAL) * numX, cudaMemcpyHostToDevice);
+  cudaMemcpy(globs.myX, tmp, sizeof(REAL) * numX, cudaMemcpyHostToDevice);
 
 
   const REAL stdY = 10.0*nu*sqrt(t);
   const REAL dy = stdY/numY;
   const REAL logAlpha = log(alpha);
-  globs->myYindex = static_cast<unsigned>(numY/2.0);
+  globs.myYindex = static_cast<unsigned>(numY/2.0);
 
   for(unsigned i = 0; i < numY; i++) {
-    tmp[i] = i*dy - globs->myYindex*dy + logAlpha;
+    tmp[i] = i*dy - globs.myYindex*dy + logAlpha;
   }
   cudaMemcpy(globs->myY, tmp, sizeof(REAL) * numY, cudaMemcpyHostToDevice);
   free(tmp);
@@ -82,8 +82,6 @@ initOperatorKernel(const REAL *x, const unsigned n, REAL *Dxx)
 void
 initOperator(const REAL *x, const unsigned n, REAL *Dxx)
 {
-  //const unsigned n = x.size();
-
   initOperatorKernel
     <<<
     dim3(DIVUP(n, 32), 1, 1),
