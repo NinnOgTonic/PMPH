@@ -249,7 +249,7 @@ tridag_kernel_5(REAL *yy, REAL *b, int numX, int numY) {
   yy[(gidO * numX + gidI) * numY] = 1.0 / b[(gidO * numX + gidI) * numY];
 
   for(j = 1; j < numY; j++) {
-    yy[(gido * numx + gidi) * numy + j] = 1.0 / (b[(gidO * numX + gidI) * numY + j] + yy[(gidO * numX + gidI) * numY + j] * yy[(gido * numx + gidi) * numy + j - 1]);
+    yy[(gidO * numX + gidI) * numY + j] = 1.0 / (b[(gidO * numX + gidI) * numY + j] + yy[(gidO * numX + gidI) * numY + j] * yy[(gidO * numX + gidI) * numY + j - 1]);
   }
 }
 
@@ -469,5 +469,4 @@ run_OrigCPU(const unsigned int   outer,
   value(globs, s0,   t,
         alpha, nu,   beta,
         res);
-  }
 }
