@@ -1,1 +1,13 @@
-\section{Transformation 1 $\rightarrow$ 3: Naive CUDA}
+\section{Transformation 1 $\rightarrow$ 3: Naïve CUDA}
+
+The purpose of this transformation was to take the original code and
+make a parallel version of it without doing much work in terms of code
+transformations. We simply took all loops that were trivially
+parallizable and created kernels for them.
+
+To make this work without being utterly slow, to also inlined tridag
+and unpacked it into a few maps and three scans. The three scans in
+each tridag was implemented as 2 kernels.
+
+This change caused a factor X speedup compared to the previous version
+(from N seconds to M seconds).

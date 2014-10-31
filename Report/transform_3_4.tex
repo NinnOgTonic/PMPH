@@ -1,1 +1,12 @@
 \section{Transformation 3 $\rightarrow$ 4: Parallelizing the outer loop}
+
+In this change did not reduce the amount of work to be done or how it
+was done. Rather, it made all the kernels run fewer time, but with a
+larger grid. This is an improvement, both because the GPU scheduler
+in general works better if it gets more work.
+
+Especially some of the tridag-scans work a lot better than before,
+because they had so few threads before.
+
+This change caused a factor X speedup compared to the previous version
+(from N seconds to M seconds).

@@ -188,7 +188,7 @@ tridag_kernel_3(REAL *u, REAL *a, REAL *b, int numX, int numY) {
 }
 
 __global__ void
-rollback_kernel_5(REAL *a, REAL *b, REAL *c, REAL *y, REAL *u, REAL *v, REAL *yy, REAL *myDyy, REAL *myVarY, REAL dtInv, int numX, int numY) {
+rollback_kernel_4(REAL *a, REAL *b, REAL *c, REAL *y, REAL *u, REAL *v, REAL *yy, REAL *myDyy, REAL *myVarY, REAL dtInv, int numX, int numY) {
   const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
   const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
   const unsigned int tidJ = threadIdx.y;
@@ -370,7 +370,7 @@ rollback(const REAL dtInv, PrivGlobs &globs)
      c[i][j] =       - 0.5 * 0.5 * myVarY[i][j] * myDyy[i][2]
      y[i][j] = dtInv * u[j][i] - 0.5 * v[i][j]
   */
-  rollback_kernel_5
+  rollback_kernel_4
     <<<
     dim3(globs.numX, DIVUP(globs.numY, 32), 1),
     dim3(1, 32, 1),
