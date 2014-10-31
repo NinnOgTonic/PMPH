@@ -1,12 +1,11 @@
 CXX        = g++
 LIB        = -L$(OPENCL_LIBDIR) -lOpenCL
-CXXFLAGS   = -fopenmp -O3 -DWITH_FLOATS=0 -Wall -Werror -pedantic
-#CXXFLAGS   = -fopenmp -O0 -ggdb -DWITH_FLOATS=0 -Wall -Werror -pedantic
+CXXFLAGS   = -fopenmp -O3 -DWITH_FLOATS=0
 
 INCLUDES    += -I ../include
 GPU_OPTS   = -D lgWARP=5
 
-SOURCES_CPP =ProjectMain.cpp ProjHelperFun.cpp ProjCoreOrig.cpp
+SOURCES_CPP =ProjectMain.cpp ProjHelperFun.cpp ProjCoreOrig.cpp 
 HELPERS     =ProhHelperFun.h ../include/Constants.h ../include/ParseInput.h ../include/ParserC.h ../include/OpenmpUtil.h
 OBJECTS     =ProjectMain.o ProjHelperFun.o  ProjCoreOrig.o
 EXECUTABLE  =runproject
@@ -34,3 +33,4 @@ run_large: $(EXECUTABLE)
 
 clean:
 	rm -f Debug.txt $(EXECUTABLE) $(OBJECTS)
+
