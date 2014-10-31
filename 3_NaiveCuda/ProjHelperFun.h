@@ -118,7 +118,7 @@ struct PrivGlobs {
 
 void
 initGrid(const REAL s0, const REAL alpha, const REAL nu,const REAL t,
-         const unsigned numX, const unsigned numY, const unsigned numT, PrivGlobs *globs);
+         const unsigned numX, const unsigned numY, const unsigned numT, PrivGlobs &globs);
 
 void
 initOperator(const REAL *x, const unsigned n, REAL *Dxx);

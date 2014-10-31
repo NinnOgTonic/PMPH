@@ -486,7 +486,7 @@ run_OrigCPU(const unsigned int&   outer,
   total_count2 = 0;
 
   PrivGlobs globs(numX, numY, numT);
-  initGrid(s0, alpha, nu, t, numX, numY, numT, &globs);
+  initGrid(s0, alpha, nu, t, numX, numY, numT, globs);
   initOperator(globs.myX, numX, globs.myDxx);
   initOperator(globs.myY, numY, globs.myDyy);
 

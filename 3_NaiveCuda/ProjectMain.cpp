@@ -9,7 +9,6 @@ int main()
 
   readDataSet( OUTER_LOOP_COUNT, NUM_X, NUM_Y, NUM_T );
 
-  const int Ps = get_CPU_num_threads();
   REAL* res = (REAL*)malloc(OUTER_LOOP_COUNT*sizeof(REAL));
 
   {   // Original Program (Sequential CPU Execution)

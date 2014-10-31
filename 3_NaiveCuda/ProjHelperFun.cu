@@ -35,7 +35,7 @@ initGrid(const REAL s0,
 
 
   for(unsigned i = 0; i < numX; i++) {
-    tmp[i] = i*dx - globs->myXindex*dx + s0;
+    tmp[i] = i*dx - globs.myXindex*dx + s0;
   }
   cudaMemcpy(globs.myX, tmp, sizeof(REAL) * numX, cudaMemcpyHostToDevice);
 
@@ -48,7 +48,7 @@ initGrid(const REAL s0,
   for(unsigned i = 0; i < numY; i++) {
     tmp[i] = i*dy - globs.myYindex*dy + logAlpha;
   }
-  cudaMemcpy(globs->myY, tmp, sizeof(REAL) * numY, cudaMemcpyHostToDevice);
+  cudaMemcpy(globs.myY, tmp, sizeof(REAL) * numY, cudaMemcpyHostToDevice);
   free(tmp);
 }
 
