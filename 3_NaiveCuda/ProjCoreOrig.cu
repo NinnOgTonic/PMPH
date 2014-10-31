@@ -5,7 +5,8 @@
 #include <sys/time.h>
 
 __global__ void
-updateParams_kernel(const REAL alpha, const REAL beta, const REAL nu, REAL *myVarX, REAL *myVarY, REAL *myX, REAL *myY, int numX, int numY) {
+updateParams_kernel(const REAL alpha, const REAL beta, const REAL nu, REAL *myVarX, REAL *myVarY, REAL *myX, REAL *myY, int numX, int numY)
+{
   const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
   const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
 
@@ -18,7 +19,8 @@ updateParams_kernel(const REAL alpha, const REAL beta, const REAL nu, REAL *myVa
 }
 
 __global__ void
-setPayoff_kernel(REAL strike, REAL* myX, REAL* myResult, unsigned int numX, unsigned int numY){
+setPayoff_kernel(REAL strike, REAL* myX, REAL* myResult, unsigned int numX, unsigned int numY)
+{
   const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
   const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
 
@@ -31,7 +33,8 @@ setPayoff_kernel(REAL strike, REAL* myX, REAL* myResult, unsigned int numX, unsi
 }
 
 __global__ void
-rollback_kernel_1(REAL *v, REAL *myResult, REAL *myVarY, REAL *myDyy, int numX, int numY) {
+rollback_kernel_1(REAL *v, REAL *myResult, REAL *myVarY, REAL *myDyy, int numX, int numY)
+{
   const unsigned int gidI = blockIdx.y*blockDim.y + threadIdx.y;
   const unsigned int gidJ = blockIdx.x*blockDim.x + threadIdx.x;
   const unsigned int lidJ = threadIdx.x;
@@ -177,10 +180,10 @@ tridag_kernel_3(REAL *u, REAL *a, REAL *b, int numX, int numY) {
     return;
 
   for(i = 1; i < numX; i++) {
-    u[gidJ*numX+i] = u[gidJ*numX+i] + a[gidJ*numX+i] * u[gidJ*numX+i-1];
+    u[gidJ*numX+i] += a[gidJ*numX+i] * u[gidJ*numX+i-1];
   }
   for(i = numX-2; i >= 0; i--) {
-    u[gidJ*numX+i] = u[gidJ*numX+i] + b[gidJ*numX+i] * u[gidJ*numX+i+1];
+    u[gidJ*numX+i] += b[gidJ*numX+i] * u[gidJ*numX+i+1];
   }
 }
 
@@ -261,10 +264,10 @@ tridag_kernel_7(REAL *results, REAL *a, REAL *b, int numX, int numY) {
     return;
 
   for(j = 1; j < numY; j++) {
-    results[gidI*numY+j] = results[gidI*numY+j] + a[gidI*numY+j] * results[gidI*numY+j-1];
+    results[gidI*numY+j] += a[gidI*numY+j] * results[gidI*numY+j-1];
   }
   for(j = numY-2; j >= 0; j--) {
-    results[gidI*numY+j] = results[gidI*numY+j] + b[gidI*numY+j] * results[gidI*numY+j+1];
+    results[gidI*numY+j] += b[gidI*numY+j] * results[gidI*numY+j+1];
   }
 }
 
