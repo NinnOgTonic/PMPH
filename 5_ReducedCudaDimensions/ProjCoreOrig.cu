@@ -258,7 +258,7 @@ rollback(const REAL dtInv, PrivGlobs &globs)
 {
   /* v[o][j][i] = 0.5 * myVarY[i][j] * myDyy[i][0..2] `dot` myResult[o][i][j-1..j+1]
      u[o][j][i] = dtInv * myResult[o][i][j] +
-       0.5 * 0.5 * myVarX[i][j]*myDxx[0..2][i] `dot` myResult[o][i-1..i+1][j] +
+       0.5 * 0.5 * myVarX[i][j] * myDxx[0..2][i] `dot` myResult[o][i-1..i+1][j] +
        v[o][j][i]
      a[j][i] =       - 0.5 * 0.5 * myVarX[j][i] * myDxx[0][i]
      b[j][i] = dtInv - 0.5 * 0.5 * myVarX[j][i] * myDxx[1][i]
