@@ -4,7 +4,7 @@ SOURCES_CPP =ProjectMain.cpp ProjHelperFun.cu ProjCoreOrig.cu
 HELPERS     =ProhHelperFun.h ../include/Constants.h ../include/ParseInput.h ../include/ParserC.h ../include/OpenmpUtil.h
 OBJECTS     =ProjectMain.o ProjHelperFun.o  ProjCoreOrig.o
 EXECUTABLE  =runproject
-CXXFLAGS    = -g -I ../include --compiler-options -Wall -O3 -arch=sm_35
+CXXFLAGS    = -g -I ../include --compiler-options -Wall -O3 -arch=sm_35 -DWITH_FLOATS=1
 
 default: cpu
 

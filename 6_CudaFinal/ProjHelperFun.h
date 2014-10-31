@@ -115,7 +115,7 @@ initGrid(const REAL s0, const REAL alpha, const REAL nu,const REAL t,
 void
 initOperator(const REAL *x, const unsigned int n, REAL *Dxx);
 void
-rollback(const unsigned g, PrivGlobs& globs);
+rollback(const REAL g, PrivGlobs& globs);
 
 REAL
 value(PrivGlobs  &globs,

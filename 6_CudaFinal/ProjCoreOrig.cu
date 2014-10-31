@@ -384,7 +384,7 @@ rollback(const REAL dtInv, PrivGlobs &globs)
 
   /* myResult[o][j][i] += a[j][i] * myResult[o][j-1][i]
      myResult[o][j][i] += b[j][i] * myResult[o][j+1][i] */
-  tridag_kernel&
+  tridag_kernel_7
     <<<
     dim3(DIVUP(globs.numX, 128), 1, globs.numO),
     dim3(128, 1, 1)
