@@ -13,8 +13,8 @@ updateParams_kernel(const REAL alpha, const REAL beta, const REAL nu, REAL *myVa
   if(gidI >= numX || gidJ >= numY)
     return;
 
-  myVarX[gidJ * numX + gidI] = 0.25 * exp(2.0 * (beta  * log(myX[gidI]) + myY[gidJ] + nu));
-  myVarY[gidJ * numX + gidI] =        exp(2.0 * (alpha * log(myX[gidI]) + myY[gidJ] + nu));
+  myVarX[gidJ * numX + gidI] = exp(2.0 * (beta  * log(myX[gidI]) + myY[gidJ] + nu));
+  myVarY[gidJ * numX + gidI] = exp(2.0 * (alpha * log(myX[gidI]) + myY[gidJ] + nu));
 
 }
 
@@ -89,15 +89,14 @@ rollback_kernel_1(REAL *a, REAL *b, REAL *c, REAL *u, REAL *v, REAL *myResult, R
     tmp += myDxx[2 * numX + gidI] * myResult[(gidO * numX + gidI + 1) * numY + gidJ];
   }
 
-  REAL varx = myVarX[gidJ * numX + gidI];
-  u[(gidO * numY + gidJ) * numX + gidI] = varx * tmp +
+  u[(gidO * numY + gidJ) * numX + gidI] = 0.5 * 0.5 * myVarX[gidJ * numX + gidI] * tmp +
     v_tmp +
     dtInv * sh_mem[32*lidJ + lidI];
 
   if(gidO == 0) {
-    a[gidJ * numX + gidI]  =       - varx * myDxx[0 * numX + gidI];
-    b[gidJ * numX + gidI]  = dtInv - varx * myDxx[1 * numX + gidI];
-    c[gidJ * numX + gidI]  =       - varx * myDxx[2 * numX + gidI];
+    a[gidJ * numX + gidI]  =       - 0.5 * 0.5 * myVarX[gidJ * numX + gidI] * myDxx[0 * numX + gidI];
+    b[gidJ * numX + gidI]  = dtInv - 0.5 * 0.5 * myVarX[gidJ * numX + gidI] * myDxx[1 * numX + gidI];
+    c[gidJ * numX + gidI]  =       - 0.5 * 0.5 * myVarX[gidJ * numX + gidI] * myDxx[2 * numX + gidI];
   }
 }
 
