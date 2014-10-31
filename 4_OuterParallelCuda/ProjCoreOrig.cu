@@ -302,7 +302,7 @@ rollback(const REAL dtInv, PrivGlobs &globs)
   checkCudaError(cudaThreadSynchronize());
 
   /* u[o][j][i] = dtInv * myResult[o][i][j] +
-     0.5 * 0.5 * myVarX[i][j]*myDxx[i][0..2] `dot` myResult[o][i-1..i+1][j] +
+     0.5 * 0.5 * myVarX[i][j]*myDxx[0..2][i] `dot` myResult[o][i-1..i+1][j] +
      v[o][i][j]
   */
   rollback_kernel_2
@@ -315,9 +315,9 @@ rollback(const REAL dtInv, PrivGlobs &globs)
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
 
-  /* a[o][j][i] =       - 0.5 * 0.5 * myVarX[i][j] * myDxx[i][0]
-     b[o][j][i] = dtInv - 0.5 * 0.5 * myVarX[i][j] * myDxx[i][1]
-     c[o][j][i] =       - 0.5 * 0.5 * myVarX[i][j] * myDxx[i][2]
+  /* a[o][j][i] =       - 0.5 * 0.5 * myVarX[i][j] * myDxx[0][i]
+     b[o][j][i] = dtInv - 0.5 * 0.5 * myVarX[i][j] * myDxx[1][i]
+     c[o][j][i] =       - 0.5 * 0.5 * myVarX[i][j] * myDxx[2][i]
   */
   rollback_kernel_3
     <<<
@@ -379,9 +379,9 @@ rollback(const REAL dtInv, PrivGlobs &globs)
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
 
-  /* a[o][i][j] =       - 0.5 * 0.5 * myVarY[i][j] * myDyy[i][0]
-     b[o][i][j] = dtInv - 0.5 * 0.5 * myVarY[i][j] * myDyy[i][1]
-     c[o][i][j] =       - 0.5 * 0.5 * myVarY[i][j] * myDyy[i][2]
+  /* a[o][i][j] =       - 0.5 * 0.5 * myVarY[i][j] * myDyy[0][i]
+     b[o][i][j] = dtInv - 0.5 * 0.5 * myVarY[i][j] * myDyy[1][i]
+     c[o][i][j] =       - 0.5 * 0.5 * myVarY[i][j] * myDyy[2][i]
      y[o][i][j] = dtInv * u[o][j][i] - 0.5 * v[o][i][j]
   */
   rollback_kernel_4
