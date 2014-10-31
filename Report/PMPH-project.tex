@@ -214,15 +214,19 @@ Every other loop is completely parallelizable.
 \chapter{Does it validate?}
 Yes.
 \chapter{Results}
-\begin{tabular}{|r|c|c|c|}
+\begin{tabular}{|r|r|r|r|}
   \hline
   Data set size / Implementation & Small & Medium & Large\\
   \hline
-  Sequential with flatten arrays & $2162560 \mu s$ & $5652265 \mu s$ & $195845401 \mu s$ \\
+  Sequential with flatten arrays & $2020815 \mu s$ & $4325245 \mu s$ & $191298141 \mu s$ \\
  \hline
  OpenMP & $183016 \mu s$ & $241972 \mu s$ & $9680948 \mu s$\\
   \hline
  Naive CUDA & $3956322 \mu s$ & $3639421 \mu s$ & $34980508 \mu s$\\
+  \hline
+ CUDA with rollback loop propagated & $462572 \mu s$ & $486986 \mu s$ & $19281810 \mu s$\\
+  \hline
+ CUDA with dimmension reductions & $391842 \mu s$ & $371853 \mu s$ & $3727729 \mu s$\\
   \hline
  Optimised CUDA & $183016 \mu s$ & $241972 \mu s$ & $9680948 \mu s$\\
   \hline
