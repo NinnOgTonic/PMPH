@@ -170,23 +170,23 @@ morekeywords={*,...,xchar,xstring,xmany1,chainl1,chainl1',ReadP}            % if
 We have included 6 versions of our code in the attached tarball:
 
 \begin{itemize}
-\item The directory \texttt{1\_Orig} contains the original code, only
+\item The directory \texttt{1\_OriginalCPU} contains the original code, only
   modified slightly to make e.g. whitespace more consistent with the
   result of our code.
 \item The directory \texttt{2\_OpenMP} contains our OpenMP code, which
   parallelizes the outer loop in \texttt{run\_OrigCPU}.
-\item The directory \texttt{3\_CUDA} contains our initial CUDA
+\item The directory \texttt{3\_NaiveCuda} contains our initial CUDA
   version. It is coded without any major code transformations: We have
   simply taking the loops that were naïvely parallelizable and
   implemented kernels for them. To achieve this we inlined the
   \texttt{tridag} function, so parts of it could be made more parallel.
-\item The directory \texttt{4\_CUDA} gets a large speedup by expanding
+\item The directory \texttt{4\_OuterParallelCuda} gets a large speedup by expanding
   the arrays and moving the outer loop into \texttt{rollback}, thus
   making all the kernels run on a larger number of blocks.
-\item The directory \texttt{5\_CUDA} gets a further speedup by reducing
+\item The directory \texttt{5\_ReducedCudaDimmensions} gets a further speedup by reducing
   the outer-dimension of the some of the arrays, as their value did not
   depend on that dimension.
-\item The directory \texttt{6\_CUDA} is our final version. It is for
+\item The directory \texttt{6\_CudaFinal} is our final version. It is for
   all intents and purposes the same as the previous version, except
   almost every memory access have been made coalesced.
 \end{itemize}
@@ -198,7 +198,7 @@ There are only two true sources of loop-dependencies in the code:
   \item The loop in \texttt{value} have dependencies upon previous
     versions of the same data.
   \item The loops in \texttt{tridag} are bascially two scans, though
-    after the expansions provided in \texttt{3\_CUDA}, we altered it
+    after the expansions provided in \texttt{3\_NaiveCuda}, we altered it
     to three scans and a few maps, implemented as three kernels.
 \end{itemize}
 
