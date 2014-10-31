@@ -146,8 +146,30 @@ Looking at the table, we found that all kernels (besides 0) performed best block
 
 
 
-
 Note: Calculate a/b/c separately in kernel 5 for speedup
+
+
+
+
+did more stuff. Kernel 5 is better left partially non-coalesced, since we would otherwise have to change the block size to 32. if we do so, with coalesced access, it takes around 110000 instead. We tried.
+
+Times now, at what might be the final version:
+
+2214 6
+2278 1
+5961 10
+18728 7
+18760 2
+36609 3
+37111 8
+85748 9
+85761 4
+96671 5
+156493 0
+
+Total time is now: 1695149
+
+
 
 
 
