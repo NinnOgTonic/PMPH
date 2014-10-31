@@ -214,6 +214,7 @@ Every other loop is completely parallelizable.
 \chapter{Does it validate?}
 Yes.
 \chapter{Results}
+The configuration for these timings were optimised for speed. Cuda host thread synchronisation was turned off where not necessary, and the REAL data type was compiled to use floats instead of doubles for additional speed-up. All instances were executed on gpu04.
 \begin{tabular}{|r|r|r|r|}
   \hline
   Data set size / Implementation & Small & Medium & Large\\
@@ -234,3 +235,6 @@ Yes.
 
 
 \end{document}
+
+
+

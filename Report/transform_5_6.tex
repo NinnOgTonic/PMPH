@@ -4,10 +4,9 @@ With a working and well-structured naive Cuda implementation, the next step was 
 When an array must be arranged one way in one place and transposed in another, we have transposed the array locally in a kernel into shared memory. We did this for kernels 0 and 5, but ended up reversing the change for kernel 5 (more below).\n
 To take more advantage of the coalesced access, we tried using various block sizes for the kernels. The block size of kernel 0 remained the same in the tests, namely 32x32, since we use shared memory in this and cannot spawn more threads per core. The table below shows the timings of individual kernels at one-dimensional block sizes 32, 64, 128, 256 and 512.
 
-\begin{verbatim}
-Table of performance in micro-seconds of kernels:
-(Note: Kernel 0 is always 32x32 = 1024 for shared memory.)
-
+\begin{figure}[H]
+    \centering
+\begin{Verbatim}
 Block size:        32        64       128       256       512
 
 Kernel   0:    149963
@@ -25,19 +24,23 @@ Kernel  10:      7143      6474      6470      6523      6537
 Total time:   2031194   1860382   1793703   1808618   1818025
 \end{verbatim}
 
+\caption{Table of performance in micro-seconds of kernels}
+\end{figure}
+
 
 Looking at the table, we found that all kernels (besides 0) performed best (allowing room for variation in measurements) at block size 128.\n
-Kernel 5 remains partially non-coalesced, and we did try to fix that by using shared memory and a block size of 32x32. However, the resulting kernel took ~110000 micro-seconds to execute, which was an improvement to the 143290 micro-seconds from the one-dimensional block size of 32. But the one-dimensional block size of 128 without shared memory only took 70856 microseconds, which is clearly better.\n
+Kernel 5 remains partially non-coalesced, and we did try to fix that by using shared memory and a block size of 32x32. However, the resulting kernel took \~110000 micro-seconds to execute, which was an improvement to the 143290 micro-seconds from the one-dimensional block size of 32. But the one-dimensional block size of 128 without shared memory only took 70856 microseconds, which is clearly better.\n
 We suspect that a similar improvement might be made in kernel 0, again by sacrificing shared memory for a one-dimensional block size of 128 (or others), but we will not pursue this optimisation this time around.\n
 Looking at the kernel timings as above, we continued to tweak on coalesced accesses, benefiting in one kernel at the cost of another, searching for the optimal configuration.\n
 The final kernel timings are listed below, and the final running time is 1695149 micro-seconds (1.7 seconds).\n
-This change caused a factor 4.8 speedup compared to the previous version
-(from about 3.9 seconds to 0.79 seconds).
 
 
-\begin{tabular}{c | c}
+\begin{figure}[H]
+    \centering
+\begin{tabular}{| c | c |}
+    \hline
 Kernel & micro-seconds \\
-\vline
+    \hline
 6  & 2214 \\
 1  & 2278 \\
 10 & 5961 \\
@@ -49,6 +52,13 @@ Kernel & micro-seconds \\
 4  & 85761 \\
 5  & 96671 \\
 0  & 156493
+    \hline
 \end{tabular}
+\caption{Kernel timings after all optimisations}
+\end{figure}
+
+It should be noted that all timings in this section were taken October 28th, but the same program on the same server now runs significantly faster on the 31st. Before the optimal version took 1.7 seconds, but now the same version takes 0.79 seconds.\n
+
+These optimisations caused a factor 4.8 speedup compared to the previous version (from about 3.9 seconds to 0.79 seconds).
 
 
