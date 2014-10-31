@@ -1,0 +1,73 @@
+run_OrigCPU:
+    res = map(value(...), [0..outer]
+
+value:
+    const args
+    init strike
+
+    for i = numT-2..0:
+        updateParams(i)
+        rollback()
+
+updateParams(g):
+    for i = 0..numX-1:
+        for j = 0..numY-1:
+            myvarX[i][j] = func1(myX[i], myY[j], myTimeline[g])
+            myvarY[i][j] = func2(myX[i], myY[j], myTimeline[g])
+
+rollback:
+    malloc tmp arrays
+    consts
+
+    # time = numX * numY
+    # map
+    for i = 0..numX-1:
+        # stencil
+        for j = 0..numY-1:
+            tmp = myDyy[j][1]] * myResult[i][j]
+            if(j > 0)
+                tmp += myDyy[j][0]] * myResult[i][j - 1]
+            if(j < numY - 1)
+                tmp += myDyy[j][2]] * myResult[i][j + 1]
+
+
+            v[i][j]  = 0.5 * myVary[i][j] * tmp
+
+    # time = numX * numY
+    # map
+    for j = 0..numY-1:
+        # stencil
+        for i = 0..numX-1:
+            tmp = myDxx[i][1]] * myResult[i][j]
+            if(i > 0)
+                tmp += myDxx[i][0]] * myResult[i - 1][j]
+            if(i < numX - 1)
+                tmp += myDxx[i][2]] * myResult[i + 1][j]
+
+            u[j][i]  = dtInv * myResult[i][j] + 0.25 * myVarX[i][j] * tmp + v[i][j]
+
+    # time = 4 * numX * numY
+    for j = 0..numY-1:
+        for i = 0..numX-1:
+            a[i] =       -0.25 * myVarX[i][j] * myDxx[i][0]
+            b[i] = dtInv -0.25 * myVarX[i][j] * myDxx[i][1]
+            c[i] =       -0.25 * myVarX[i][j] * myDxx[i][2]
+        u[j] = tridag(a, b, c, u[j])
+
+    #time 4 * numX * numY
+    for i = 0..numX-1:
+        for j = 0..numY-1:
+            a[i] =       -0.25 * myVarY[i][j] * myDyy[i][0]
+            b[i] = dtInv -0.25 * myVarY[i][j] * myDyy[i][1]
+            c[i] =       -0.25 * myVarY[i][j] * myDyy[i][2]
+
+            y[j] = dtInv * u[j][i] - 0.5 * v[i][j]
+
+        myResult[i] = tridag(a, b, c, y)
+
+tridag(a,b,c,r) -> (u), tmp(uu):
+
+
+
+
+
