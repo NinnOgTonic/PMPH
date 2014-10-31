@@ -161,10 +161,10 @@ tridag_kernel_3(REAL *u, REAL *a, REAL *b, int numX, int numY) {
     return;
 
   for(i = 1; i < numX; i++) {
-    u[(gidO * numY + gidJ) * numX + i] += a[gidJ * numX + i] * u[(gidO * numY + gidJ) * numX + i];
+    u[(gidO * numY + gidJ) * numX + i] += a[gidJ * numX + i] * u[(gidO * numY + gidJ) * numX + i - 1];
   }
   for(i = numX-2; i >= 0; i--) {
-    u[(gidO * numY + gidJ) * numX + i] += b[gidJ * numX + i] * u[(gidO * numY + gidJ) * numX + i];
+    u[(gidO * numY + gidJ) * numX + i] += b[gidJ * numX + i] * u[(gidO * numY + gidJ) * numX + i - 1];
   }
 }
 
@@ -247,10 +247,10 @@ tridag_kernel_7(REAL *myResult, REAL *a, REAL *b, int numX, int numY) {
     return;
 
   for(j = 1; j < numY; j++) {
-    myResult[(gidO * numX + gidI) * numY + j] += a[gidI * numY + j] * myResult[(gidO * numX + gidI) * numY + j];
+    myResult[(gidO * numX + gidI) * numY + j] += a[gidI * numY + j] * myResult[(gidO * numX + gidI) * numY + j - 1];
   }
   for(j = numY-2; j >= 0; j--) {
-    myResult[(gidO * numX + gidI) * numY + j] += b[gidI * numY + j] * myResult[(gidO * numX + gidI) * numY + j];
+    myResult[(gidO * numX + gidI) * numY + j] += b[gidI * numY + j] * myResult[(gidO * numX + gidI) * numY + j - 1];
   }
 }
 
