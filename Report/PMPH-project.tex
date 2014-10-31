@@ -191,9 +191,27 @@ We have included 6 versions of our code in the attached tarball:
   almost every memory access have been made coalesced.
 \end{itemize}
 
+\chapter{Summary of different loops}
+There are only two true sources of loop-dependencies in the code:
+
+\begin{itemize}
+  \item The loop in \texttt{value} have dependencies upon previous
+    versions of the same data.
+  \item The loops in \texttt{tridag} are bascially two scans, though
+    after the expansions provided in \texttt{3\_CUDA}, we altered it
+    to three scans and a few maps, implemented as three kernels.
+\end{itemize}
+
+Every other loop is completely parallelizable.
+
 \chapter{Transformations}
-\input{transformations.tex}
-\chapter{Will it validate?}
+\input{transform_1_2.tex}
+\input{transform_1_3.tex}
+\input{transform_3_4.tex}
+\input{transform_4_5.tex}
+\input{transform_5_6.tex}
+
+\chapter{Does it validate?}
 Yes.
 \chapter{Results}
 \begin{tabular}{|r|c|c|c|}
