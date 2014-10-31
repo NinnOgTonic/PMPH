@@ -183,7 +183,7 @@ We have included 6 versions of our code in the attached tarball:
 \item The directory \texttt{4\_OuterParallelCuda} gets a large speedup by expanding
   the arrays and moving the outer loop into \texttt{rollback}, thus
   making all the kernels run on a larger number of blocks.
-\item The directory \texttt{5\_ReducedCudaDimmensions} gets a further speedup by reducing
+\item The directory \texttt{5\_ReducedCudaDimensions} gets a further speedup by reducing
   the outer-dimension of the some of the arrays, as their value did not
   depend on that dimension.
 \item The directory \texttt{6\_CudaFinal} is our final version. It is for
@@ -218,17 +218,17 @@ Yes.
   \hline
   Data set size / Implementation & Small & Medium & Large\\
   \hline
-  Sequential with flatten arrays & $2020815 \mu s$ & $4325245 \mu s$ & $191298141 \mu s$ \\
+  Sequential & $2041425 \mu s$ & $4996503 \mu s$ & $187699474 \mu s$ \\
  \hline
  OpenMP & $183016 \mu s$ & $241972 \mu s$ & $9680948 \mu s$\\
   \hline
- Naive CUDA & $3956322 \mu s$ & $3639421 \mu s$ & $34980508 \mu s$\\
+ Naive CUDA & $2142530 \mu s$ & $3344009 \mu s$ & $40035689 \mu s$\\
   \hline
- CUDA with rollback loop propagated & $462572 \mu s$ & $486986 \mu s$ & $19281810 \mu s$\\
+ CUDA with rollback loop propagated & $480526 \mu s$ & $503774 \mu s$ & $7794961 \mu s$\\
   \hline
- CUDA with dimmension reductions & $391842 \mu s$ & $371853 \mu s$ & $3727729 \mu s$\\
+ CUDA with dimmension reductions & $452969 \mu s$ & $371853 \mu s$ & $3727729 \mu s$\\
   \hline
- Optimised CUDA & $183016 \mu s$ & $241972 \mu s$ & $9680948 \mu s$\\
+ Optimised CUDA & $314699 \mu s$ & $324522 \mu s$ & $791390 \mu s$\\
   \hline
 \end{tabular}
 

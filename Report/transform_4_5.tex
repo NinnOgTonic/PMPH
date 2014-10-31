@@ -1,1 +1,21 @@
 \section{Transformation 4 $\rightarrow$ 5: Reducing dimensions}
+The transformation between version 4 and 5 mainly consisted of reducing the dimensions of the arrays in \texttt{PrivGlobs} such that we do not recalculate identical instances of the same arrays in each outer dimension as.\n
+Thus the array definitions seen in Figure \ref{dimreductions} has been changed such that they are only calculated once and then reused the result thoughtout the execution. Accordingly all accesses has been changed to not respect the outer dimension.
+
+\begin{figure}[H]
+    \centering
+\begin{Verbatim}[label={4\_OuterParallelCuda/ProjHelperFun.h}]
+checkCudaError(cudaMalloc(\&this->a,          numO * numY * numX * sizeof(REAL)));
+checkCudaError(cudaMalloc(\&this->b,          numO * numY * numX * sizeof(REAL)));
+checkCudaError(cudaMalloc(\&this->c,          numO * numY * numX * sizeof(REAL)));
+checkCudaError(cudaMalloc(\&this->yy,         numO * numY * numX * sizeof(REAL)));
+\end{Verbatim}
+\vspace{2mm}
+\begin{Verbatim}[label={5\_ReducedCudaDimensions/ProjHelperFun.h}]
+checkCudaError(cudaMalloc(\&this->a,                 numY * numX * sizeof(REAL)));
+checkCudaError(cudaMalloc(\&this->b,                 numY * numX * sizeof(REAL)));
+checkCudaError(cudaMalloc(\&this->c,                 numY * numX * sizeof(REAL)));
+checkCudaError(cudaMalloc(\&this->yy,                numY * numX * sizeof(REAL)));
+\end{Verbatim}
+\caption{Overview of data structure changes between version 4 and 5\label{dimreductions}}
+\end{figure}
