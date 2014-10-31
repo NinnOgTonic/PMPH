@@ -81,10 +81,8 @@ initOperatorKernel(const REAL *x, const unsigned n, REAL *Dxx)
 }
 
 void
-initOperator(const REAL *x, const unsigned n, REAL *Dxx, unsigned int outer)
+initOperator(const REAL *x, const unsigned n, REAL *Dxx)
 {
-  //const unsigned n = x.size();
-
   initOperatorKernel
     <<<
     dim3(DIVUP(n, 32), 1, 1),

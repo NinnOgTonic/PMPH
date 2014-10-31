@@ -24,7 +24,7 @@ checkCudaError(cudaError err) {
   }
 }
 
-#define DEBUG 0
+#define DEBUG 1
 #if DEBUG
 #define cudaThreadSynchronize() cudaSuccess
 #endif
@@ -113,22 +113,9 @@ initGrid(const REAL s0, const REAL alpha, const REAL nu,const REAL t,
          const unsigned int numO, PrivGlobs &globs);
 
 void
-initOperator(const REAL *x, const unsigned int n, REAL *Dxx, unsigned int numO);
-
+initOperator(const REAL *x, const unsigned int n, REAL *Dxx);
 void
-updateParams(const unsigned int g, const REAL alpha, const REAL beta, const REAL nu, PrivGlobs &globs);
-
-void
-setPayoff(const REAL strike, PrivGlobs &globs);
-
-void
-tridag(const REAL *a,   // size [n]
-       const REAL *b,   // size [n]
-       const REAL *c,   // size [n]
-       const REAL *r,   // size [n]
-       const int  n,
-       REAL       *u,   // size [n]
-       REAL       *uu); // size [n] temporary
+rollback(const unsigned g, PrivGlobs& globs);
 
 REAL
 value(PrivGlobs  &globs,

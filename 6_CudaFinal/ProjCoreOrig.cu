@@ -4,7 +4,7 @@
 #include <time.h>
 #include <sys/time.h>
 
-static __global__ void
+__global__ void
 updateParams_kernel(const REAL alpha, const REAL beta, const REAL nu, REAL *myVarX, REAL *myVarY, REAL *myX, REAL *myY, int numX, int numY)
 {
   const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
@@ -18,8 +18,8 @@ updateParams_kernel(const REAL alpha, const REAL beta, const REAL nu, REAL *myVa
 
 }
 
-static __global__ void
-set_payoff_kernel(REAL* myX, REAL* myResult, unsigned int numX, unsigned int numY, unsigned int numO)
+__global__ void
+setPayoff_kernel(REAL* myX, REAL* myResult, unsigned int numX, unsigned int numY, unsigned int numO)
 {
   const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
   const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
@@ -34,8 +34,8 @@ set_payoff_kernel(REAL* myX, REAL* myResult, unsigned int numX, unsigned int num
 
 }
 
-static __global__ void
-rollback_kernel_0(REAL *a, REAL *b, REAL *c, REAL *u, REAL *v, REAL *myResult, REAL *myVarX, REAL *myVarY, REAL *myDxx, REAL *myDyy, REAL dtInv, int numX, int numY)
+__global__ void
+rollback_kernel_1(REAL *a, REAL *b, REAL *c, REAL *u, REAL *v, REAL *myResult, REAL *myVarX, REAL *myVarY, REAL *myDxx, REAL *myDyy, REAL dtInv, int numX, int numY)
 {
   const unsigned int gidO = blockIdx.z*blockDim.z + threadIdx.z;
   const unsigned int bidI = blockIdx.x*blockDim.x;
@@ -115,8 +115,8 @@ rollback_kernel_0(REAL *a, REAL *b, REAL *c, REAL *u, REAL *v, REAL *myResult, R
   }
 }
 
-static __global__ void
-rollback_kernel_1(REAL *a, REAL *c, REAL *yy, int numX, int numY) {
+__global__ void
+tridag_kernel_0(REAL *a, REAL *c, REAL *yy, int numX, int numY) {
   const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x + 1;
   const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
 
@@ -126,8 +126,8 @@ rollback_kernel_1(REAL *a, REAL *c, REAL *yy, int numX, int numY) {
   yy[gidI * numY + gidJ] = -a[gidI * numY + gidJ] * c[(gidI-1) * numY + gidJ];
 }
 
-static __global__ void
-rollback_kernel_2(REAL *yy, REAL *b, int numX, int numY) {
+__global__ void
+tridag_kernel_1(REAL *yy, REAL *b, int numX, int numY) {
   const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
   int i;
 
@@ -142,8 +142,8 @@ rollback_kernel_2(REAL *yy, REAL *b, int numX, int numY) {
 }
 
 
-static __global__ void
-rollback_kernel_3(REAL *a, REAL *b, REAL *c, REAL *u, REAL *yy, int numX, int numY) {
+__global__ void
+tridag_kernel_2(REAL *a, REAL *b, REAL *c, REAL *u, REAL *yy, int numX, int numY) {
   const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
   const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
   const unsigned int gidO = blockIdx.z*blockDim.z + threadIdx.z;
@@ -166,8 +166,8 @@ rollback_kernel_3(REAL *a, REAL *b, REAL *c, REAL *u, REAL *yy, int numX, int nu
   u[(gidO * numX + gidI) * numY + gidJ] = u[(gidO * numX + gidI) * numY + gidJ] * yy[gidI * numY + gidJ];
 }
 
-static __global__ void
-rollback_kernel_4(REAL *u, REAL *a, REAL *b, int numX, int numY) {
+__global__ void
+tridag_kernel_3(REAL *u, REAL *a, REAL *b, int numX, int numY) {
   const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
   const unsigned int gidO = blockIdx.z*blockDim.z + threadIdx.z;
   int i;
@@ -183,8 +183,8 @@ rollback_kernel_4(REAL *u, REAL *a, REAL *b, int numX, int numY) {
   }
 }
 
-static __global__ void
-rollback_kernel_5(REAL *a, REAL *b, REAL *c, REAL *u, REAL *v, REAL *y, REAL *myDyy, REAL *myVarY, REAL dtInv, int numX, int numY) {
+__global__ void
+rollback_kernel_2(REAL *a, REAL *b, REAL *c, REAL *u, REAL *v, REAL *y, REAL *myDyy, REAL *myVarY, REAL dtInv, int numX, int numY) {
   const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
   const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
   const unsigned int gidO = blockIdx.z*blockDim.z + threadIdx.z;
@@ -200,8 +200,8 @@ rollback_kernel_5(REAL *a, REAL *b, REAL *c, REAL *u, REAL *v, REAL *y, REAL *my
   y[(gidO * numY + gidJ) * numX + gidI] = dtInv * u[(gidO * numX + gidI) * numY + gidJ] - v[(gidO * numX + gidI) * numY + gidJ];
 }
 
-static __global__ void
-rollback_kernel_6(REAL *a, REAL *c, REAL *yy, int numX, int numY) {
+__global__ void
+tridag_kernel_4(REAL *a, REAL *c, REAL *yy, int numX, int numY) {
   const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
   const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
 
@@ -213,8 +213,8 @@ rollback_kernel_6(REAL *a, REAL *c, REAL *yy, int numX, int numY) {
   }
 }
 
-static __global__ void
-rollback_kernel_7(REAL *yy, REAL *b, int numX, int numY) {
+__global__ void
+tridag_kernel_5(REAL *yy, REAL *b, int numX, int numY) {
   const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
   int j;
 
@@ -228,8 +228,8 @@ rollback_kernel_7(REAL *yy, REAL *b, int numX, int numY) {
   }
 }
 
-static __global__ void
-rollback_kernel_8(REAL *a, REAL *b, REAL *c, REAL *u, REAL *v, REAL *y, REAL *yy, REAL *myResult, int numX, int numY, REAL dtInv) {
+__global__ void
+tridag_kernel_6(REAL *a, REAL *b, REAL *c, REAL *u, REAL *v, REAL *y, REAL *yy, REAL *myResult, int numX, int numY, REAL dtInv) {
   const unsigned int gidO = blockIdx.z*blockDim.z + threadIdx.z;
   const unsigned int bidI = blockIdx.x*blockDim.x;
   const unsigned int bidJ = blockIdx.y*blockDim.y;
@@ -255,8 +255,8 @@ rollback_kernel_8(REAL *a, REAL *b, REAL *c, REAL *u, REAL *v, REAL *y, REAL *yy
   myResult[(gidO * numY + gidJ) * numX + gidI] = y[(gidO * numY + gidJ) * numX + gidI] * yy[gidJ * numX + gidI];
 }
 
-static __global__ void
-rollback_kernel_9(REAL *myResult, REAL *a, REAL *b, int numX, int numY) {
+__global__ void
+tridag_kernel_7(REAL *myResult, REAL *a, REAL *b, int numX, int numY) {
   const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
   const unsigned int gidO = blockIdx.z*blockDim.z + threadIdx.z;
   int j;
@@ -272,26 +272,7 @@ rollback_kernel_9(REAL *myResult, REAL *a, REAL *b, int numX, int numY) {
   }
 }
 
-struct timeval t_start;
-long long counters[20];
-
-static void
-start()
-{
-  gettimeofday(&t_start, NULL);
-}
-
-static void
-end(long long *out)
-{
-
-  struct timeval t_end, t_diff;
-  gettimeofday(&t_end, NULL);
-  timersub(&t_end, &t_start, &t_diff);
-  *out += t_diff.tv_sec*1e6+t_diff.tv_usec;
-}
-
-static void
+void
 rollback(const REAL dtInv, PrivGlobs &globs)
 {
 
@@ -301,7 +282,7 @@ rollback(const REAL dtInv, PrivGlobs &globs)
      b[i][j]    = dtInv - myVarX[i][j] * myDxx[1][i]
      c[i][j]    =       - myVarX[i][j] * myDxx[2][i]
    */
-  rollback_kernel_0
+  rollback_kernel_1
     <<<
     dim3(DIVUP(globs.numX, 32), DIVUP(globs.numY, 32), globs.numO),
     dim3(32, 32, 1),
@@ -310,10 +291,9 @@ rollback(const REAL dtInv, PrivGlobs &globs)
     (globs.a, globs.b, globs.c, globs.u, globs.v, globs.myResult, globs.myVarX, globs.myVarY, globs.myDxx, globs.myDyy, dtInv, globs.numX, globs.numY);
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
-  end(&counters[0]); start();
 
   /* yy[i][j] = - a[i][j] * c[i-1][j] */
-  rollback_kernel_1
+  tridag_kernel_0
     <<<
     dim3(globs.numX-1, DIVUP(globs.numY, 128), 1),
     dim3(1, 128, 1)
@@ -321,11 +301,10 @@ rollback(const REAL dtInv, PrivGlobs &globs)
     (globs.a, globs.c, globs.yy, globs.numX, globs.numY);
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
-  end(&counters[1]); start();
 
   /* yy[0][j] = 1.0 / b[0][j]
      yy[i][j] = 1.0 / (b[i][j] + yy[i][j] * yy[i-1][j])*/
-  rollback_kernel_2
+  tridag_kernel_1
     <<<
     dim3(1, DIVUP(globs.numY, 128), 1),
     dim3(1, 128, 1)
@@ -333,12 +312,11 @@ rollback(const REAL dtInv, PrivGlobs &globs)
     (globs.yy, globs.b, globs.numX, globs.numY);
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
-  end(&counters[2]); start();
 
   /* a[i][j]    = 1.0 / (c[i-1][j] * yy[i-1][j] - b[i][j] / a[i][j])
      b[i][j]    = -  c[i][j] * yy[i][j]
      u[o][i][j] = u[o][i][j] * yy[i][j] */
-  rollback_kernel_3
+  tridag_kernel_2
     <<<
     dim3(globs.numX, DIVUP(globs.numY, 128), globs.numO),
     dim3(1, 128, 1)
@@ -346,11 +324,10 @@ rollback(const REAL dtInv, PrivGlobs &globs)
     (globs.a, globs.b, globs.c, globs.u, globs.yy, globs.numX, globs.numY);
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
-  end(&counters[3]); start();
 
   /* u[o][i][j] += a[i][j] * u[o][i-1][j]
      u[o][i][j] += b[i][j] * u[o][i+1][j] */
-  rollback_kernel_4
+  tridag_kernel_3
     <<<
     dim3(1, DIVUP(globs.numY, 128), globs.numO),
     dim3(1, 128, 1)
@@ -358,13 +335,12 @@ rollback(const REAL dtInv, PrivGlobs &globs)
     (globs.u, globs.a, globs.b, globs.numX, globs.numY);
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
-  end(&counters[4]); start();
 
   /* a[j][i] =  =       - 0.25 * myVarY[j][i] * myDyy[0][j]
      b[j][i] =  = dtInv - 0.25 * myVarY[j][i] * myDyy[1][j]
      c[j][i] =  =       - 0.25 * myVarY[j][i] * myDyy[2][j]
      y[o][j][i] = dtInv * u[o][i][j] - v[o][i][j] */
-  rollback_kernel_5
+  rollback_kernel_2
     <<<
     dim3(globs.numX, DIVUP(globs.numY, 128), globs.numO),
     dim3(1, 128, 1)
@@ -372,10 +348,9 @@ rollback(const REAL dtInv, PrivGlobs &globs)
     (globs.a, globs.b, globs.c, globs.u, globs.v, globs.y, globs.myDyy, globs.myVarY, dtInv, globs.numX, globs.numY);
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
-  end(&counters[5]); start();
 
   /* yy[j][i] = -a[j][i] * c[j-1][i] */
-  rollback_kernel_6
+  tridag_kernel_4
     <<<
     dim3(DIVUP(globs.numX, 128), globs.numY, 1),
     dim3(128, 1, 1)
@@ -383,11 +358,10 @@ rollback(const REAL dtInv, PrivGlobs &globs)
     (globs.a, globs.c, globs.yy, globs.numX, globs.numY);
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
-  end(&counters[6]); start();
 
   /* yy[0][i] = 1.0 / b[0][i]
      yy[j][i] = 1.0 / (b[j][i] + yy[j][i] * yy[j-1][i]) */
-  rollback_kernel_7
+  tridag_kernel_5
     <<<
     dim3(DIVUP(globs.numX, 128), 1, 1),
     dim3(128, 1, 1)
@@ -395,12 +369,11 @@ rollback(const REAL dtInv, PrivGlobs &globs)
     (globs.yy, globs.b, globs.numX, globs.numY);
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
-  end(&counters[7]); start();
 
   /* a[j][i] = 1.0 / (c[j-1][i] * yy[j-1][i] - b[j][i] / a[j][i])
      b[j][i] = -c[j][i] * yy[j][i]
      myResult[o][j][i] = y[o][j][i] * yy[j][i] */
-  rollback_kernel_8
+  tridag_kernel_6
     <<<
     dim3(DIVUP(globs.numX, 128), globs.numY, globs.numO),
     dim3(128, 1, 1)
@@ -408,11 +381,10 @@ rollback(const REAL dtInv, PrivGlobs &globs)
     (globs.a, globs.b, globs.c, globs.u, globs.v, globs.y, globs.yy, globs.myResult, globs.numX, globs.numY, dtInv);
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
-  end(&counters[8]); start();
 
   /* myResult[o][j][i] += a[j][i] * myResult[o][j-1][i]
      myResult[o][j][i] += b[j][i] * myResult[o][j+1][i] */
-  rollback_kernel_9
+  tridag_kernel&
     <<<
     dim3(DIVUP(globs.numX, 128), 1, globs.numO),
     dim3(128, 1, 1)
@@ -420,11 +392,9 @@ rollback(const REAL dtInv, PrivGlobs &globs)
     (globs.myResult, globs.a, globs.b, globs.numX, globs.numY);
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
-  end(&counters[9]);
-
 }
 
-static void
+void
 value(PrivGlobs &globs,
       const REAL s0,
       const REAL t,
@@ -434,7 +404,7 @@ value(PrivGlobs &globs,
       REAL *res)
 {
 
-  set_payoff_kernel
+  setPayoff_kernel
     <<<
     dim3(DIVUP(globs.numX, 128), globs.numY, globs.numO),
     dim3(128, 1, 1)
@@ -442,8 +412,6 @@ value(PrivGlobs &globs,
     (globs.myX, globs.myResult, globs.numX, globs.numY, globs.numO);
 
   for(int i = globs.numT-2; i >= 0; i--) {
-    start();
-
     updateParams_kernel
       <<<
       dim3(globs.numX, DIVUP(globs.numY, 128), 1),
@@ -452,7 +420,6 @@ value(PrivGlobs &globs,
       (alpha, beta, -0.5 * nu * nu * globs.myTimeline[i], globs.myVarX, globs.myVarY, globs.myX, globs.myY, globs.numX, globs.numY);
     checkCudaError(cudaGetLastError());
     checkCudaError(cudaThreadSynchronize());
-    end(&counters[10]); start();
 
     rollback(1.0 / (globs.myTimeline[i+1] - globs.myTimeline[i]), globs);
   }
@@ -474,24 +441,12 @@ run_OrigCPU(const unsigned int   outer,
             const REAL           beta,
             REAL*                res)   // [outer] RESULT
 {
-  for(int i = 0; i <= 11; i++) {
-    counters[i] = 0;
-  }
-
-  start();
   PrivGlobs globs(numX, numY, numT, outer);
-  // checkCudaError(cudaGetLastError());
-  // checkCudaError(cudaThreadSynchronize());
-  end(&counters[11]); start();
-
   initGrid(s0, alpha, nu, t, numX, numY, numT, outer, globs);
-  initOperator(globs.myX, numX, globs.myDxx, outer);
-  initOperator(globs.myY, numY, globs.myDyy, outer);
+  initOperator(globs.myX, numX, globs.myDxx);
+  initOperator(globs.myY, numY, globs.myDyy);
 
   value(globs, s0,   t,
         alpha, nu,   beta,
         res);
-  for(int i = 0; i <= 11; i++) {
-    printf("%lld %d\n", counters[i], i);
-  }
 }
