@@ -183,7 +183,7 @@ We have included 6 versions of our code in the attached tarball:
 \item The directory \texttt{4\_OuterParallelCuda} gets a large speedup by expanding
   the arrays and moving the outer loop into \texttt{rollback}, thus
   making all the kernels run on a larger number of blocks.
-\item The directory \texttt{5\_ReducedCudaDimmensions} gets a further speedup by reducing
+\item The directory \texttt{5\_ReducedCudaDimensions} gets a further speedup by reducing
   the outer-dimension of the some of the arrays, as their value did not
   depend on that dimension.
 \item The directory \texttt{6\_CudaFinal} is our final version. It is for
