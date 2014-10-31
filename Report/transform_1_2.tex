@@ -1,1 +1,12 @@
 \section{Transformation 1 $\rightarrow$ 2: OpenMP privatization}
+
+The transformations done in our OpenMP version are very small: We
+moved the calculation of \texttt{PrivGlobs} and \texttt{strike} into
+the \texttt{value}-function. This caused the outer loop to be
+parallelizable, so we put a pragma on it.
+
+This caused a X times speedup. We did manage to squeeze slightly more
+performance out of the code, by e.g. using arrays instead of
+vectors. However the performance gains were quite small and the
+changes quite large (and uninteresting), so we decided not to include
+the further optimized version.
