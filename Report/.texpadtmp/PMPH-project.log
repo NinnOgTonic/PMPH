@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013) (format=pdflatex 2013.12.8)  31 OCT 2014 12:58
+This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013) (format=pdflatex 2013.12.8)  31 OCT 2014 16:26
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -689,12 +689,12 @@ LaTeX Font Warning: Font shape `OT1/mathptmx/bx/n' undefined
 LaTeX Font Warning: Font shape `OT1/mathptmx/bx/it' undefined
 (Font)              using `OT1/mathptmx/bx/n' instead on input line 158.
 
-<nat-farve.pdf, id=32, 597.23125pt x 845.1575pt>
+<nat-farve.pdf, id=44, 597.23125pt x 845.1575pt>
 File: nat-farve.pdf Graphic file (type pdf)
  <use nat-farve.pdf>
 Package pdftex.def Info: nat-farve.pdf used on input line 164.
 (pdftex.def)             Requested size: 597.16599pt x 845.06516pt.
- <nat-en.pdf, id=33, 597.23125pt x 845.1575pt>
+ <nat-en.pdf, id=45, 597.23125pt x 845.1575pt>
 File: nat-en.pdf Graphic file (type pdf)
  <use nat-en.pdf>
 Package pdftex.def Info: nat-en.pdf used on input line 164.
@@ -702,7 +702,7 @@ Package pdftex.def Info: nat-en.pdf used on input line 164.
  [1
 
 {/usr/local/texlive/2013/texmf-var/fonts/map/pdftex/updmap/pdftex.map} <./nat-farve.pdf> <./nat-en.pdf>] (/Users/morten/Dropbox/PMPH/PMPH/Report/.texpadtmp/PMPH-project.toc
-LaTeX Font Info:    Try loading font information for U+stmry on input line 3.
+LaTeX Font Info:    Try loading font information for U+stmry on input line 5.
  (/usr/local/texlive/2013/texmf-dist/tex/latex/stmaryrd/Ustmry.fd))
 \tf@toc=\write5
 \openout5 = `PMPH-project.toc'.
@@ -715,7 +715,13 @@ l.166 \newpage
 
 ]
 Chapter 1.
-(./transformations.tex (./tridagrewrite.tex) (./nativecuda.tex) (./looppropagation.tex) (./memoryoptimisations.tex)) [2
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 173.
+(/usr/local/texlive/2013/texmf-dist/tex/latex/base/omscmr.fd
+File: omscmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
+)
+LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 173.
+ [2
 
 ]
 Chapter 2.
@@ -723,35 +729,124 @@ Chapter 2.
 
 ]
 Chapter 3.
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 187.
-[4
+(./transform_1_2.tex
+Overfull \hbox (11.85367pt too wide) in paragraph at lines 1--1
+[]\OT1/cmr/bx/n/14.4 Transformation 1 $\OMS/cmsy/m/n/14.4 !$ \OT1/cmr/bx/n/14.4 2: OpenMP pri-va-ti-za-tion 
+ []
+
+
+Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
+(hyperref)                removing `math shift' on input line 1.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
+(hyperref)                removing `\rightarrow' on input line 1.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
+(hyperref)                removing `math shift' on input line 1.
+
+) (./transform_1_3.tex
+
+Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
+(hyperref)                removing `math shift' on input line 1.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
+(hyperref)                removing `\rightarrow' on input line 1.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
+(hyperref)                removing `math shift' on input line 1.
+
+) (./transform_3_4.tex
+
+Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
+(hyperref)                removing `math shift' on input line 1.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
+(hyperref)                removing `\rightarrow' on input line 1.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
+(hyperref)                removing `math shift' on input line 1.
+
+) (./transform_4_5.tex
+Overfull \hbox (2.04388pt too wide) in paragraph at lines 1--1
+[]\OT1/cmr/bx/n/14.4 Transformation 4 $\OMS/cmsy/m/n/14.4 !$ \OT1/cmr/bx/n/14.4 5: Re-duc-ing di-men-sions 
+ []
+
+
+Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
+(hyperref)                removing `math shift' on input line 1.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
+(hyperref)                removing `\rightarrow' on input line 1.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
+(hyperref)                removing `math shift' on input line 1.
+
+LaTeX Font Info:    Try loading font information for OT1+pcr on input line 7.
+(/usr/local/texlive/2013/texmf-dist/tex/latex/psnfss/ot1pcr.fd
+File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
+) [4
+
+]) (./transform_5_6.tex
+
+Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
+(hyperref)                removing `math shift' on input line 1.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
+(hyperref)                removing `\rightarrow' on input line 1.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
+(hyperref)                removing `math shift' on input line 1.
+
+) [5]
+Chapter 4.
+[6
 
 ]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 187.
+Chapter 5.
+
+Overfull \hbox (16.05835pt too wide) in paragraph at lines 217--234
+[] 
+ []
+
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 236.
+[7
+
+]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 236.
  (/Users/morten/Dropbox/PMPH/PMPH/Report/.texpadtmp/PMPH-project.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 187.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 187.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 236.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 236.
 Package rerunfilecheck Info: File `PMPH-project.out' has not changed.
 (rerunfilecheck)             Checksum: <no file>.
 
 
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 187.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 236.
  ) 
 Here is how much of TeX's memory you used:
- 10405 strings out of 493315
- 152688 string characters out of 6137904
- 436648 words of memory out of 5000000
- 13659 multiletter control sequences out of 15000+600000
- 7428 words of font info for 28 fonts, out of 8000000 for 9000
+ 10490 strings out of 493315
+ 153907 string characters out of 6137904
+ 439648 words of memory out of 5000000
+ 13726 multiletter control sequences out of 15000+600000
+ 9154 words of font info for 35 fonts, out of 8000000 for 9000
  957 hyphenation exceptions out of 8191
- 40i,14n,47p,312b,359s stack positions out of 5000i,500n,10000p,200000b,80000s
-</usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb>
-Output written on /Users/morten/Dropbox/PMPH/PMPH/Report/.texpadtmp/PMPH-project.pdf (5 pages, 116020 bytes).
+ 40i,14n,47p,313b,372s stack positions out of 5000i,500n,10000p,200000b,80000s
+{/usr/local/texlive/2013/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb></usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive/2013/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb>
+Output written on /Users/morten/Dropbox/PMPH/PMPH/Report/.texpadtmp/PMPH-project.pdf (8 pages, 167982 bytes).
 PDF statistics:
- 112 PDF objects out of 1000 (max. 8388607)
- 92 compressed objects within 1 object stream
- 13 named destinations out of 1000 (max. 500000)
- 67 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 162 PDF objects out of 1000 (max. 8388607)
+ 134 compressed objects within 2 object streams
+ 20 named destinations out of 1000 (max. 500000)
+ 91 words of extra memory for PDF output out of 10000 (max. 10000000)
 

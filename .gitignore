@@ -29,3 +29,6 @@
 
 #RETARD MAC
 .DS_STORE
+.texpadtmp/
+.texpadtmp*
+!/.texpadtmp
