@@ -19,16 +19,13 @@ $(EXECUTABLE): $(OBJECTS)
 	nvcc $(CXXFLAGS) -o $@ $^
 
 run_small: $(EXECUTABLE)
-	cat ../Data/Small/input.data ../Data/Small/output.data | time ./$(EXECUTABLE)
+	cat ../Data/Small/input.data ../Data/Small/output.data | ./$(EXECUTABLE)
 
 run_medium: $(EXECUTABLE)
-	cat ../Data/Medium/input.data ../Data/Medium/output.data | time ./$(EXECUTABLE)
+	cat ../Data/Medium/input.data ../Data/Medium/output.data | ./$(EXECUTABLE)
 
 run_large: $(EXECUTABLE)
-	cat ../Data/Large/input.data ../Data/Large/output.data | time ./$(EXECUTABLE)
-
-run_extreme: $(EXECUTABLE)
-	cat ../Data/Extreme/input.data ../Data/Extreme/output.data | time ./$(EXECUTABLE)
+	cat ../Data/Large/input.data ../Data/Large/output.data | ./$(EXECUTABLE)
 
 clean:
 	rm -f Debug.txt $(EXECUTABLE) $(OBJECTS)
