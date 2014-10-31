@@ -210,7 +210,7 @@ rollback_kernel_5(REAL *a, REAL *b, REAL *c, REAL *y, REAL *u, REAL *v, REAL *yy
 }
 
 __global__ void
-rollback_kernel_6(REAL *a, REAL *c, REAL *yy, int numX, int numY) {
+tridag_kernel_4(REAL *a, REAL *c, REAL *yy, int numX, int numY) {
   const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
   const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
 
@@ -223,7 +223,7 @@ rollback_kernel_6(REAL *a, REAL *c, REAL *yy, int numX, int numY) {
 }
 
 __global__ void
-tridag_kernel_4(REAL *yy, REAL *b, int numX, int numY) {
+tridag_kernel_5(REAL *yy, REAL *b, int numX, int numY) {
   const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
   int j;
 
@@ -238,7 +238,7 @@ tridag_kernel_4(REAL *yy, REAL *b, int numX, int numY) {
 }
 
 __global__ void
-tridag_kernel_5(REAL *a, REAL *b, REAL *c, REAL *y, REAL *yy, REAL *results, int numX, int numY) {
+tridag_kernel_6(REAL *a, REAL *b, REAL *c, REAL *y, REAL *yy, REAL *results, int numX, int numY) {
   const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
   const unsigned int gidJ = blockIdx.y*blockDim.y + threadIdx.y;
 
@@ -253,7 +253,7 @@ tridag_kernel_5(REAL *a, REAL *b, REAL *c, REAL *y, REAL *yy, REAL *results, int
 }
 
 __global__ void
-tridag_kernel_6(REAL *results, REAL *a, REAL *b, int numX, int numY) {
+tridag_kernel_7(REAL *results, REAL *a, REAL *b, int numX, int numY) {
   const unsigned int gidI = blockIdx.x*blockDim.x + threadIdx.x;
   int j;
 
@@ -298,9 +298,9 @@ rollback(const REAL dtInv, PrivGlobs &globs)
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
 
-  /* a[i] =       - 0.5 * 0.5 * myVarX[i][j] * myDxx[i][0]
-     b[i] = dtInv - 0.5 * 0.5 * myVarX[i][j] * myDxx[i][1]
-     c[i] =       - 0.5 * 0.5 * myVarX[i][j] * myDxx[i][2]
+  /* a[j][i] =       - 0.5 * 0.5 * myVarX[i][j] * myDxx[i][0]
+     b[j][i] = dtInv - 0.5 * 0.5 * myVarX[i][j] * myDxx[i][1]
+     c[j][i] =       - 0.5 * 0.5 * myVarX[i][j] * myDxx[i][2]
   */
   rollback_kernel_3
     <<<
@@ -322,9 +322,9 @@ rollback(const REAL dtInv, PrivGlobs &globs)
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
 
-  /* yy[i] = 1.0 / b[0]
+  /* yy[j][0] = 1.0 / b[j][0]
      for i = 1..N:
-       yy[i] = 1.0 / (b[i] - yy[i] * yy[i-1])
+       yy[j][i] = 1.0 / (b[j][i] - yy[j][i] * yy[j][i-1])
   */
   tridag_kernel_1
     <<<
@@ -348,8 +348,11 @@ rollback(const REAL dtInv, PrivGlobs &globs)
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
 
-  /* u = func(u[i-1], a)
-     u = func(u[i+1], b) */
+  /* loop i = 1..N:
+       u[j][i] += a[j][i] * u[j][i-1]
+     loop i = N-1..0:
+       u[j][i] += b[j][i] * u[j][i+1]
+  */
   tridag_kernel_3
     <<<
     dim3(1, DIVUP(globs.numY, 32), 1),
@@ -359,6 +362,11 @@ rollback(const REAL dtInv, PrivGlobs &globs)
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
 
+  /* a[i][j] =       - 0.5 * 0.5 * myVarY[i][j] * myDyy[i][0]
+     b[i][j] = dtInv - 0.5 * 0.5 * myVarY[i][j] * myDyy[i][1]
+     c[i][j] =       - 0.5 * 0.5 * myVarY[i][j] * myDyy[i][2]
+     y[i][j] = dtInv * u[j][i] - 0.5 * v[i][j]
+  */
   rollback_kernel_5
     <<<
     dim3(globs.numX, DIVUP(globs.numY, 32), 1),
@@ -369,7 +377,8 @@ rollback(const REAL dtInv, PrivGlobs &globs)
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
 
-  rollback_kernel_6
+  /* yy[i][j] = -a[i][j] * c[i][j-1] */
+  tridag_kernel_4
     <<<
     dim3(globs.numX, DIVUP(globs.numY, 32), 1),
     dim3(1, 32, 1)
@@ -378,7 +387,11 @@ rollback(const REAL dtInv, PrivGlobs &globs)
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
 
-  tridag_kernel_4
+  /* yy[i][0] = 1.0 / b[i][0]
+     for j = 1..N:
+       yy[i][j] = 1.0 / (b[i][j] - yy[i][j] * yy[i][j-1])
+  */
+  tridag_kernel_5
     <<<
     dim3(DIVUP(globs.numX, 32), 1, 1),
     dim3(32, 1, 1)
@@ -387,7 +400,11 @@ rollback(const REAL dtInv, PrivGlobs &globs)
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
 
-  tridag_kernel_5
+  /* a[i][j] = 1.0 / (c[i][j-1] * yy[i][j-1] - b[i][j] / a[i][j])
+     b[i][j] = - c[i][j] * yy[i][j]
+     myResults[i][j] =   y[i][j] * yy[i][j]
+  */
+  tridag_kernel_6
     <<<
     dim3(globs.numX, DIVUP(globs.numY, 32), 1),
     dim3(1, 32, 1)
@@ -396,7 +413,12 @@ rollback(const REAL dtInv, PrivGlobs &globs)
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
 
-  tridag_kernel_6
+  /* loop j = 1..N:
+       myResults[i][j] += a[i][j] * myResults[i][j-1]
+     loop j = N-1..0:
+       myResults[i][j] += b[i][j] * myResults[i][j+1]
+  */
+  tridag_kernel_7
     <<<
     dim3(DIVUP(globs.numX, 32), 1, 1),
     dim3(32, 1, 1)
