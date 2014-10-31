@@ -1,7 +1,7 @@
 \section{Transformation 4 $\rightarrow$ 5: Reducing dimensions}
-The transformation between version 4 and 5 mainly consisted of reducing the dimensions of the arrays in \texttt{PrivGlobs} such that we do not recalculate identical instances of the same arrays in each outer dimension as.\n
-Thus the array definitions seen in Figure \ref{dimreductions} has been changed such that they are only calculated once and then reused the result thoughtout the execution. Accordingly all accesses has been changed to not respect the outer dimension.\n
-This change caused a factor 2 speedup compared to the previous version
+The transformation between version 4 and 5 mainly consisted of reducing the dimensions of the arrays in \texttt{PrivGlobs} such that we do not re-calculate identical instances of the same arrays in each outer dimension as before.\n
+Thus the array definitions seen in Figure \ref{dimreductions} have been changed such that they are only calculated once and then reused the result thoughtout the execution. Accordingly, all accesses have been changed to not respect the outer dimension.\n
+This change caused a factor 2 speed-up compared to the previous version
 (from about 7.8 seconds to 3.9 seconds).
 
 
