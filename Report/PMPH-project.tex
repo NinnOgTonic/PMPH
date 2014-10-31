@@ -197,8 +197,12 @@ There are only two true sources of loop-dependencies in the code:
 \begin{itemize}
   \item The loop in \texttt{value} have dependencies upon previous
     versions of the same data.
-  \item The loops in \texttt{tridag} are bascially two scans ...
+  \item The loops in \texttt{tridag} are bascially two scans, though
+    after the expansions provided in \texttt{3\_CUDA}, we altered it
+    to three scans and a few maps, implemented as three kernels.
 \end{itemize}
+
+Every other loop is completely parallelizable.
 
 \chapter{Transformations}
 \input{transform_1_2.tex}
