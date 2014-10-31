@@ -55,7 +55,7 @@ morekeywords={*,...,xchar,xstring,xmany1,chainl1,chainl1',ReadP}            % if
 \newcommand{\theassingment}{Programming Massively Parallel Hardware}
 \newcommand{\thesubassignment}{Optimising Tridag}
 \newcommand{\shorttheassingment}{PMPH Group Project}
-\newcommand{\thepaperauthor}{Morten Espensen \& Niklas Høj \& Mathias Svennson}
+\newcommand{\thepaperauthor}{Morten Espensen \& Niklas Høj \& Mathias Svensson}
 \newcommand{\personalid}{dzr440 - 19/06/1991 \& nwv762 - 24/07/1991 \& tpx783 - 20/07/1990}
 \newcommand{\thesubject}{Group Project}
 \newcommand{\theinstitute}{Department of Computer Science}
@@ -167,17 +167,17 @@ morekeywords={*,...,xchar,xstring,xmany1,chainl1,chainl1',ReadP}            % if
 
 \chapter{Versions of our code}
 
-We have included 6 versions of our code in the attached tarball:
+We have included 6 versions of our code in the attached zip archive:
 
 \begin{itemize}
 \item The directory \texttt{1\_OriginalCPU} contains the original code, only
   modified slightly to make e.g. whitespace more consistent with the
-  result of our code.
+  rest of our code.
 \item The directory \texttt{2\_OpenMP} contains our OpenMP code, which
-  parallelizes the outer loop in \texttt{run\_OrigCPU}.
+  parallelises the outer loop in \texttt{run\_OrigCPU}.
 \item The directory \texttt{3\_NaiveCuda} contains our initial CUDA
   version. It is coded without any major code transformations: We have
-  simply taking the loops that were naïvely parallelizable and
+  simply taken the loops that were naïvely parallelisable and
   implemented kernels for them. To achieve this we inlined the
   \texttt{tridag} function, so parts of it could be made more parallel.
 \item The directory \texttt{4\_OuterParallelCuda} gets a large speedup by expanding
@@ -188,21 +188,21 @@ We have included 6 versions of our code in the attached tarball:
   depend on that dimension.
 \item The directory \texttt{6\_CudaFinal} is our final version. It is for
   all intents and purposes the same as the previous version, except
-  almost every memory access have been made coalesced.
+  almost every memory access has been made coalesced.
 \end{itemize}
 
 \chapter{Summary of different loops}
 There are only two true sources of loop-dependencies in the code:
 
 \begin{itemize}
-  \item The loop in \texttt{value} have dependencies upon previous
+  \item The loop in \texttt{value} has dependencies on previous
     versions of the same data.
   \item The loops in \texttt{tridag} are bascially two scans, though
     after the expansions provided in \texttt{3\_NaiveCuda}, we altered it
     to three scans and a few maps, implemented as three kernels.
 \end{itemize}
 
-Every other loop is completely parallelizable.
+Every other loop is completely parallelisable.
 
 \chapter{Transformations}
 \input{transform_1_2.tex}

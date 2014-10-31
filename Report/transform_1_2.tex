@@ -5,7 +5,7 @@ moved the calculation of \texttt{PrivGlobs} and \texttt{strike} into
 the \texttt{value}-function. This caused the outer loop to be
 parallelizable, so we put a pragma on it for OpenMP parallelism.
 
-This caused a ~19 times speedup (from 194.1 seconds to 10.3 seconds).
+This caused a \~19 times speedup (from 194.1 seconds to 10.3 seconds).
 We did manage to squeeze slightly more performance out of the code,
 e.g. by using arrays instead of vectors. However the performance gains
 were quite small and the changes quite large (and uninteresting for this
