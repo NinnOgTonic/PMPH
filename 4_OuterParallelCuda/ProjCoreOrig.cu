@@ -511,13 +511,13 @@ run_OrigCPU(const unsigned int   outer,
 {
   PrivGlobs globs(numX, numY, numT, outer);
   initGrid(s0, alpha, nu, t, numX, numY, numT, outer, globs);
-  initOperator(globs.myX, numX, globs.myDxx, outer);
-  initOperator(globs.myY, numY, globs.myDyy, outer);
+  initOperator(globs.myX, numX, globs.myDxx);
+  initOperator(globs.myY, numY, globs.myDyy);
 
   value(globs, s0,   t,
         alpha, nu,   beta,
         res);
   for(int i = 0; i <= 11; i++) {
-    printf("%lld %d\n", i, counters[i]);
+    printf("%d %lld\n", i, counters[i]);
   }
 }
