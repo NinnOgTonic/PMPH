@@ -1,0 +1,60 @@
+rollback_kernel_1:
+  v[o][i][j] = 0.5 * myVarY[i][j]*myDyy[i][0..2] `dot` myResult[o][i][j-1..j+1]
+
+rollback_kernel_2:
+  u[o][j][i] = dtInv * myResult[o][i][j] +
+  0.5 * 0.5 * myVarX[i][j]*myDxx[0..2][i] `dot` myResult[o][i-1..i+1][j] + v[o][i][j]
+
+rollback_kernel_3:
+  a[o][j][i] =       - 0.5 * 0.5 * myVarX[i][j] * myDxx[0][i]
+  b[o][j][i] = dtInv - 0.5 * 0.5 * myVarX[i][j] * myDxx[1][i]
+  c[o][j][i] =       - 0.5 * 0.5 * myVarX[i][j] * myDxx[2][i]
+
+tridag_kernel_0:
+  yy[o][j][i] = -a[o][j][i] * c[o][j][i-1]
+
+tridag_kernel_1:
+  yy[o][j][0] = 1.0 / b[o][j][0]
+  for i = 1..N:
+    yy[o][j][i] = 1.0 / (b[o][j][i] - yy[o][j][i] * yy[o][j][i-1])
+
+tridag_kernel_2:
+  a[o][j][i] = 1.0 / (c[o][j][i-1] * yy[o][j][i-1] - b[o][j][i] / a[o][j][i])
+  b[o][j][i] = - c[o][j][i] * yy[o][j][i]
+  u[o][j][i] =   u[o][j][i] * yy[o][j][i]
+
+
+tridag_kernel_3:
+  loop i = 1..N:
+    u[o][j][i] += a[o][j][i] * u[o][j][i-1]
+  loop i = N-1..0:
+    u[o][j][i] += b[o][j][i] * u[o][j][i+1]
+
+
+rollback_kernel_4:
+  a[o][i][j] =       - 0.5 * 0.5 * myVarY[i][j] * myDyy[0][i]
+  b[o][i][j] = dtInv - 0.5 * 0.5 * myVarY[i][j] * myDyy[1][i]
+  c[o][i][j] =       - 0.5 * 0.5 * myVarY[i][j] * myDyy[2][i]
+  y[o][i][j] = dtInv * u[o][j][i] - 0.5 * v[o][i][j]
+
+
+tridag_kernel_4:
+  yy[o][i][j] = -a[o][i][j] * c[o][i][j-1]
+
+tridag_kernel_5:
+  yy[o][i][0] = 1.0 / b[o][i][0]
+  for j = 1..N:
+    yy[o][i][j] = 1.0 / (b[o][i][j] - yy[o][i][j] * yy[o][i][j-1])
+
+
+tridag_kernel_6:
+  a[o][i][j] = 1.0 / (c[o][i][j-1] * yy[o][i][j-1] - b[o][i][j] / a[o][i][j])
+  b[o][i][j] = - c[o][i][j] * yy[o][i][j]
+  myResults[o][i][j] =   y[o][i][j] * yy[o][i][j]
+
+
+tridag_kernel_7:
+  loop j = 1..N:
+    myResults[o][i][j] += a[o][i][j] * myResults[o][i][j-1]
+  loop j = N-1..0:
+    myResults[o][i][j] += b[o][i][j] * myResults[o][i][j+1]
