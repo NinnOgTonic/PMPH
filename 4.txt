@@ -35,6 +35,11 @@ rollback_kernel_4:
   b[o][i][j] = dtInv - 0.5 * 0.5 * myVarY[i][j] * myDyy[1][j]
   c[o][i][j] =       - 0.5 * 0.5 * myVarY[i][j] * myDyy[2][j]
   y[o][i][j] = dtInv * u[o][j][i] - 0.5 * v[o][i][j]
+  NOTE: We have found a mistake in rollback_kernel_4 in this version
+        In our implementation we do a wrong lookup into myDyy.
+        Instead of myDyy[0][j] we get myDyy[0][j / 32 + 0]
+        Instead of myDyy[1][j] we get myDyy[1][j / 32 + 1]
+        Instead of myDyy[2][j] we get myDyy[2][j / 32 + 2]
 
 tridag_kernel_4:
   yy[o][i][j] = -a[o][i][j] * c[o][i][j-1]
