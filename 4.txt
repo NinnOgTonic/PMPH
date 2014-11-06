@@ -23,7 +23,6 @@ tridag_kernel_2:
   b[o][j][i] = - c[o][j][i] * yy[o][j][i]
   u[o][j][i] =   u[o][j][i] * yy[o][j][i]
 
-
 tridag_kernel_3:
   loop i = 1..N:
     u[o][j][i] += a[o][j][i] * u[o][j][i-1]
@@ -37,7 +36,6 @@ rollback_kernel_4:
   c[o][i][j] =       - 0.5 * 0.5 * myVarY[i][j] * myDyy[2][i]
   y[o][i][j] = dtInv * u[o][j][i] - 0.5 * v[o][i][j]
 
-
 tridag_kernel_4:
   yy[o][i][j] = -a[o][i][j] * c[o][i][j-1]
 
@@ -46,12 +44,10 @@ tridag_kernel_5:
   for j = 1..N:
     yy[o][i][j] = 1.0 / (b[o][i][j] - yy[o][i][j] * yy[o][i][j-1])
 
-
 tridag_kernel_6:
   a[o][i][j] = 1.0 / (c[o][i][j-1] * yy[o][i][j-1] - b[o][i][j] / a[o][i][j])
   b[o][i][j] = - c[o][i][j] * yy[o][i][j]
   myResults[o][i][j] =   y[o][i][j] * yy[o][i][j]
-
 
 tridag_kernel_7:
   loop j = 1..N:
