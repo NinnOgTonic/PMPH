@@ -20,7 +20,7 @@ tridag_kernel_2:
   b[i][j]    = -  c[i][j] * yy[i][j]
   u[o][i][j] = u[o][i][j] * yy[i][j]
 
-tridag_kernel_3
+tridag_kernel_3:
   loop i = 1..N:
     u[o][i][j] += a[i][j] * u[o][i-1][j]
   loop i = N-1..0:
