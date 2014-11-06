@@ -1,9 +1,10 @@
 rollback_kernel_1:
-  v[o][i][j] = 0.5 * myVarY[i][j]*myDyy[i][0..2] `dot` myResult[o][i][j-1..j+1]
+  v[o][i][j] = 0.5 * myVarY[i][j] * myDyy[i][0..2] `dot` myResult[o][i][j-1..j+1]
 
 rollback_kernel_2:
   u[o][j][i] = dtInv * myResult[o][i][j] +
-  0.5 * 0.5 * myVarX[i][j]*myDxx[0..2][i] `dot` myResult[o][i-1..i+1][j] + v[o][i][j]
+    0.5 * 0.5 * myVarX[i][j] * myDxx[0..2][i] `dot` myResult[o][i-1..i+1][j] +
+    v[o][i][j]
 
 rollback_kernel_3:
   a[o][j][i] =       - 0.5 * 0.5 * myVarX[i][j] * myDxx[0][i]
@@ -21,14 +22,13 @@ tridag_kernel_1:
 tridag_kernel_2:
   a[o][j][i] = 1.0 / (c[o][j][i-1] * yy[o][j][i-1] - b[o][j][i] / a[o][j][i])
   b[o][j][i] = - c[o][j][i] * yy[o][j][i]
-  u[o][j][i] =   u[o][j][i] * yy[o][j][i]
+  u[o][j][i] = u[o][j][i] * yy[o][j][i]
 
 tridag_kernel_3:
   loop i = 1..N:
     u[o][j][i] += a[o][j][i] * u[o][j][i-1]
   loop i = N-1..0:
     u[o][j][i] += b[o][j][i] * u[o][j][i+1]
-
 
 rollback_kernel_4:
   a[o][i][j] =       - 0.5 * 0.5 * myVarY[i][j] * myDyy[0][j]
