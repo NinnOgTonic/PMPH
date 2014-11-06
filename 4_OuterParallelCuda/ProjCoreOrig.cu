@@ -379,9 +379,9 @@ rollback(const REAL dtInv, PrivGlobs &globs)
   checkCudaError(cudaGetLastError());
   checkCudaError(cudaThreadSynchronize());
 
-  /* a[o][i][j] =       - 0.5 * 0.5 * myVarY[i][j] * myDyy[0][i]
-     b[o][i][j] = dtInv - 0.5 * 0.5 * myVarY[i][j] * myDyy[1][i]
-     c[o][i][j] =       - 0.5 * 0.5 * myVarY[i][j] * myDyy[2][i]
+  /* a[o][i][j] =       - 0.5 * 0.5 * myVarY[i][j] * myDyy[0][j]
+     b[o][i][j] = dtInv - 0.5 * 0.5 * myVarY[i][j] * myDyy[1][j]
+     c[o][i][j] =       - 0.5 * 0.5 * myVarY[i][j] * myDyy[2][j]
      y[o][i][j] = dtInv * u[o][j][i] - 0.5 * v[o][i][j]
   */
   rollback_kernel_4
