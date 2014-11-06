@@ -7,7 +7,7 @@ rollback_kernel_1 (32 x 32 x 1, warp i):
   b[j][i] = dtInv - 0.5 * 0.5 * myVarX[j][i] * myDxx[1][i]
   c[j][i] =       - 0.5 * 0.5 * myVarX[j][i] * myDxx[2][i]
 
-tridag_kernel_0 (1 x 32 x 1, warp i):
+tridag_kernel_0 (1 x 32 x 1, warp j):
   yy[j][i] = -a[j][i] * c[j][i-1]
 
 tridag_kernel_1 (1 x 32 x 1, warp j):
